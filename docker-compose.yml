@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  fxfx-trading-engine:
+    build: .
+    container_name: fxfx_live_engine
+    restart: always
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

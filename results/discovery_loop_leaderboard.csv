@@ -1,0 +1,180 @@
+Strategy,Pair,Params,Test_Trades,Test_WinRate%,Test_PF,Test_Return%,Test_MaxDD%,Test_Sharpe,Train_PF
+London_ORB,EURJPY_15m,"{'buffer_pips': 15.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",7,71.43,10.39,2.98,0.31,3.97,0.72
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",8,62.5,6.61,4.01,0.7,4.23,0.64
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",8,62.5,6.61,4.01,0.7,4.23,0.66
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",8,62.5,6.61,4.01,0.7,4.23,0.73
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",8,62.5,6.49,3.91,0.7,4.21,0.52
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 5.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",13,69.23,6.34,13.99,1.3,5.45,0.17
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",8,62.5,6.11,3.65,0.7,3.99,1.58
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",8,62.5,5.69,3.34,0.7,3.92,1.56
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",8,62.5,5.69,3.34,0.7,3.92,1.79
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",8,62.5,5.69,3.34,0.7,3.92,1.73
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",13,76.92,5.56,12.59,1.06,7.28,0.53
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",12,75.0,5.5,9.92,1.04,5.83,1.72
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 5.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",11,63.64,4.83,9.93,1.3,4.5,0.09
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",8,62.5,4.78,6.3,1.02,4.48,0.76
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",8,62.5,4.77,6.3,1.02,4.48,1.67
+London_ORB,EURUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",16,75.0,4.1,14.07,1.07,7.13,0.79
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",12,66.67,3.68,8.9,2.06,4.53,2.06
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",5,60.0,3.66,2.88,1.02,2.38,0.0
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",8,50.0,3.64,5.32,1.02,3.34,0.77
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",13,61.54,3.63,10.04,1.07,5.37,0.11
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",7,71.43,3.55,4.84,1.89,3.59,1.65
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",7,71.43,3.53,4.79,1.89,3.44,2.01
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",8,50.0,3.46,4.93,1.02,3.24,0.64
+London_ORB,GBPUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",8,50.0,3.41,4.84,1.02,3.24,0.77
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",13,61.54,3.36,11.56,1.44,5.22,0.67
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",5,60.0,3.34,2.53,1.02,2.45,0.0
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",7,71.43,3.32,4.4,1.89,3.55,1.59
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",5,60.0,3.31,2.5,1.02,2.25,0.0
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",8,50.0,3.21,4.43,1.02,2.98,1.76
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",7,71.43,3.17,4.12,1.89,3.11,2.36
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",7,71.43,3.17,3.16,1.46,2.78,1.91
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",8,50.0,3.16,4.33,1.02,2.95,1.57
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",16,68.75,3.14,9.69,2.07,4.84,1.11
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",7,71.43,3.13,3.11,1.46,2.77,1.73
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",5,60.0,3.13,2.26,1.02,1.98,0.0
+London_ORB,EURUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",16,62.5,3.1,13.44,2.78,5.68,1.04
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",7,71.43,3.09,3.05,1.46,2.97,1.67
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",5,60.0,3.08,2.21,1.02,1.96,0.0
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",9,66.67,3.05,6.21,1.9,3.96,0.88
+London_ORB,EURJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",8,50.0,3.03,2.88,1.02,2.74,0.51
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",10,60.0,3.02,4.64,2.04,3.61,0.81
+London_ORB,EURJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",8,50.0,3.0,2.83,1.02,2.6,0.52
+London_ORB,GBPUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",8,50.0,2.91,3.83,1.02,2.8,1.94
+London_ORB,EURUSD_15m,"{'buffer_pips': 15.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",5,60.0,2.86,2.01,1.02,1.99,0.0
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",8,62.5,2.85,4.59,1.22,2.94,0.25
+London_ORB,EURUSD_15m,"{'buffer_pips': 12.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",7,71.43,2.85,2.7,1.46,2.64,1.7
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",17,58.82,2.82,10.97,1.08,5.48,0.26
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",10,60.0,2.67,3.83,2.04,3.16,0.93
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",10,60.0,2.67,3.83,2.04,3.16,1.08
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",10,60.0,2.67,3.83,2.04,3.16,1.08
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",15,60.0,2.66,7.86,2.07,4.65,1.38
+London_ORB,USDCAD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",6,50.0,2.64,3.49,2.06,2.48,1.06
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",16,62.5,2.62,9.17,3.09,4.03,1.13
+London_ORB,USDCAD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",6,50.0,2.62,3.43,2.06,2.29,1.16
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",16,62.5,2.56,8.46,2.06,4.56,1.11
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 5.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",12,50.0,2.53,7.38,2.35,3.34,0.2
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",14,50.0,2.47,10.28,2.83,3.74,0.65
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",9,55.56,2.47,5.9,2.91,3.14,1.1
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",8,62.5,2.46,3.59,1.22,2.6,0.25
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",8,62.5,2.43,3.72,1.09,2.86,0.47
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",10,60.0,2.39,4.79,2.08,3.15,0.46
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",9,55.56,2.38,5.56,2.91,2.71,1.39
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",8,62.5,2.38,3.41,1.22,2.61,0.28
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",9,55.56,2.37,5.52,2.91,2.92,1.22
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",13,46.15,2.35,8.81,2.75,3.32,0.88
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",8,62.5,2.34,3.3,1.22,2.47,0.25
+London_ORB,EURJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",8,50.0,2.3,4.74,1.44,2.54,0.61
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",15,53.33,2.25,7.34,3.1,3.61,1.27
+London_ORB,EURJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",8,50.0,2.24,4.52,1.44,2.53,0.62
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",16,56.25,2.21,7.97,2.06,3.76,1.34
+London_ORB,USDCAD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",6,50.0,2.2,2.51,2.06,1.71,1.26
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",23,60.87,2.19,10.6,2.07,4.46,0.93
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",19,52.63,2.18,11.13,4.22,0.47,1.4
+London_ORB,EURUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",16,50.0,2.16,9.33,2.78,3.53,1.13
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",15,46.67,2.15,9.68,2.85,3.37,0.61
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",23,56.52,2.14,11.59,2.07,4.88,0.86
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",14,50.0,2.12,7.72,2.83,3.18,0.57
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",10,50.0,2.11,4.91,3.09,2.57,0.66
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",12,50.0,2.09,6.96,3.06,0.06,1.13
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",14,50.0,2.08,5.83,1.86,3.06,1.24
+London_ORB,EURJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",8,50.0,2.08,3.91,1.44,2.35,0.53
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",18,55.56,2.06,7.44,3.11,3.73,0.89
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",19,42.11,2.04,11.64,5.98,0.44,1.37
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",14,50.0,2.04,7.67,3.06,0.14,0.95
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",12,41.67,2.03,7.61,5.03,0.12,1.04
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",13,46.15,2.0,5.9,1.64,2.82,0.14
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",14,50.0,1.98,5.32,1.86,2.81,1.54
+London_ORB,USDCAD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",6,50.0,1.96,2.03,2.06,1.63,0.95
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",16,50.0,1.95,6.88,2.06,2.97,1.25
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",13,46.15,1.95,6.15,2.75,2.73,0.76
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 12.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",11,54.55,1.95,5.03,2.02,-0.22,1.09
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",24,50.0,1.94,10.72,2.18,3.99,0.21
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",20,55.0,1.91,8.77,2.25,0.25,1.04
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",18,50.0,1.9,7.41,4.12,3.18,0.94
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",14,50.0,1.9,4.85,1.86,2.66,1.46
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",10,50.0,1.89,3.95,3.09,2.14,0.73
+London_ORB,GBPUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",10,50.0,1.88,3.91,3.09,2.16,0.61
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",13,46.15,1.87,5.14,1.64,2.56,0.13
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",16,56.25,1.86,5.64,3.09,2.82,1.24
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",25,40.0,1.85,12.46,5.11,0.47,1.79
+London_ORB,EURUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",16,50.0,1.85,6.8,2.78,2.92,0.97
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",25,48.0,1.84,10.86,3.14,0.41,1.76
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",20,50.0,1.84,8.85,3.26,0.24,0.84
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",17,47.06,1.83,6.72,2.14,2.92,0.24
+London_ORB,EURJPY_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",8,50.0,1.83,2.02,1.22,1.52,0.26
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",28,53.57,1.82,11.51,3.05,0.47,0.79
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",18,55.56,1.82,6.21,2.32,3.01,0.92
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",14,50.0,1.82,5.64,2.83,2.57,0.53
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",24,45.83,1.81,10.07,2.18,3.59,0.24
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",17,47.06,1.8,6.52,2.14,2.66,0.31
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",9,55.56,1.8,2.83,2.47,1.76,1.39
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",28,50.0,1.79,11.78,4.27,0.46,0.7
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",19,42.11,1.78,8.68,5.98,0.21,1.43
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",15,46.67,1.77,6.38,2.85,2.59,0.54
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",12,41.67,1.77,5.65,5.03,-0.09,1.15
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",16,50.0,1.77,5.56,2.06,2.54,1.4
+Turtle_Soup_Sweep,USDCAD_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 3.0}",24,45.83,1.76,9.43,2.18,3.24,0.24
+London_ORB,EURJPY_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",8,37.5,1.74,3.56,2.52,1.7,0.36
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",32,56.25,1.72,10.57,3.34,3.39,0.72
+London_ORB,GBPJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",9,44.44,1.69,3.12,2.34,1.62,0.23
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",9,55.56,1.67,2.38,2.47,1.55,1.5
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",22,54.55,1.66,7.16,6.19,2.55,0.83
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 5.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",18,50.0,1.66,5.72,3.08,2.49,1.11
+London_ORB,EURJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 3.0, 'sl_at_mid': False}",8,37.5,1.66,3.21,2.52,1.54,0.44
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",9,55.56,1.66,2.35,2.47,1.61,1.06
+London_ORB,EURUSD_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",9,55.56,1.66,2.33,2.47,1.52,1.37
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 12.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",14,35.71,1.65,5.8,6.64,-0.06,0.81
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",16,50.0,1.65,4.66,2.06,2.26,1.07
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",14,50.0,1.65,3.45,1.86,2.05,1.19
+London_ORB,GBPJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",11,63.64,1.65,2.16,1.03,1.62,0.31
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",25,40.0,1.62,8.95,5.47,0.23,1.89
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': True}",13,46.15,1.62,3.55,2.41,1.83,1.22
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",31,45.16,1.6,9.94,3.02,0.3,1.2
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",28,46.43,1.58,8.86,4.27,0.22,0.74
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.0, 'sl_at_mid': True}",13,46.15,1.55,3.16,2.41,1.7,1.15
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",31,48.39,1.54,8.36,3.02,0.19,1.36
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 12.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",18,33.33,1.54,6.26,6.1,-0.01,1.46
+London_ORB,AUDUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 3.0, 'sl_at_mid': True}",7,28.57,1.54,2.01,1.6,1.01,1.56
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",29,44.83,1.52,8.48,3.42,3.02,0.71
+London_ORB,GBPUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",14,50.0,1.52,3.5,2.4,1.77,0.52
+London_ORB,AUDUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",10,40.0,1.52,2.04,1.24,1.26,1.13
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.4, 'rr_ratio': 3.0}",32,34.38,1.51,10.11,7.05,0.28,1.16
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",23,47.83,1.51,5.38,3.11,3.59,0.75
+London_ORB,GBPJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",9,44.44,1.48,2.16,2.34,1.17,0.19
+London_ORB,GBPJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",11,45.45,1.47,2.67,2.16,1.38,0.27
+London_ORB,GBPJPY_15m,"{'buffer_pips': 8.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",9,44.44,1.47,2.13,2.1,1.19,0.15
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",29,48.28,1.45,6.58,3.67,2.47,0.81
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",22,50.0,1.45,5.36,7.91,1.83,0.49
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",23,47.83,1.45,5.34,5.11,2.31,0.87
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': False}",15,53.33,1.45,3.22,2.33,1.7,0.44
+London_ORB,EURJPY_15m,"{'buffer_pips': 5.0, 'rr_ratio': 2.5, 'sl_at_mid': False}",8,37.5,1.45,2.13,2.52,1.07,0.38
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",31,48.39,1.44,7.35,4.05,2.46,0.69
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",35,42.86,1.42,9.29,9.75,2.43,0.68
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",29,34.48,1.42,8.38,5.06,0.16,0.69
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",15,46.67,1.42,3.42,2.85,1.56,0.49
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 2.0}",41,46.34,1.4,8.84,4.04,0.2,1.07
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",32,40.62,1.4,7.11,5.13,0.07,1.21
+London_ORB,GBPUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",16,50.0,1.4,2.88,2.06,1.54,1.01
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",60,35.0,1.39,16.47,4.58,0.53,0.9
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 40, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",43,48.84,1.39,10.0,11.12,2.81,0.78
+London_ORB,GBPJPY_15m,"{'buffer_pips': 3.0, 'rr_ratio': 2.0, 'sl_at_mid': False}",11,45.45,1.39,2.23,2.16,1.17,0.34
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",47,34.04,1.38,12.97,6.37,0.39,0.81
+London_ORB,EURUSD_15m,"{'buffer_pips': 5.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",13,46.15,1.38,2.19,2.3,1.22,1.04
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",39,41.03,1.36,9.24,4.06,0.22,0.62
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 2.5}",40,42.5,1.36,8.26,4.04,0.16,1.02
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",39,33.33,1.35,10.12,5.28,0.25,0.55
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 15, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",25,40.0,1.35,5.55,8.12,1.66,0.96
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 12.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",32,34.38,1.34,6.68,7.4,0.04,1.31
+London_ORB,EURUSD_15m,"{'buffer_pips': 3.0, 'rr_ratio': 1.5, 'sl_at_mid': True}",16,50.0,1.34,2.35,2.4,1.26,1.19
+Turtle_Soup_Sweep,EURJPY_15m,"{'swing_lookback': 25, 'buffer_pips': 3.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",40,47.5,1.32,6.99,5.66,2.08,0.58
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 3.0}",34,38.24,1.31,7.03,9.43,1.86,0.73
+Turtle_Soup_Sweep,GBPJPY_15m,"{'swing_lookback': 15, 'buffer_pips': 3.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",36,44.44,1.31,6.84,8.96,2.07,0.74
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.4, 'rr_ratio': 2.5}",33,42.42,1.31,6.17,5.25,-0.01,0.67
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.4, 'rr_ratio': 2.0}",33,45.45,1.31,5.92,4.03,-0.04,0.7
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",52,32.69,1.3,11.31,6.24,0.3,0.65
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 8.0, 'wick_ratio': 0.4, 'rr_ratio': 3.0}",61,32.79,1.29,13.0,6.24,0.37,0.55
+Turtle_Soup_Sweep,GBPUSD_1h,"{'swing_lookback': 40, 'buffer_pips': 8.0, 'wick_ratio': 0.5, 'rr_ratio': 3.0}",40,32.5,1.29,7.95,6.51,0.12,0.77
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 15, 'buffer_pips': 8.0, 'wick_ratio': 0.6, 'rr_ratio': 2.5}",40,40.0,1.26,5.91,7.23,-0.02,1.22
+Turtle_Soup_Sweep,EURUSD_1h,"{'swing_lookback': 25, 'buffer_pips': 5.0, 'wick_ratio': 0.6, 'rr_ratio': 2.0}",63,42.86,1.25,9.08,7.26,0.2,0.98
