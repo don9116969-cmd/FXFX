@@ -1,19 +1,22 @@
 """
-Telegram Notification & Interactive Command Engine for FXFX
-Sends rich institutional trading alerts and handles interactive menu buttons:
-  - 📊 Active Trades (Which strategy has open positions vs idle)
-  - 📈 Strategy Profits (Live scorecard of all 8 strategies)
-  - ⚡ Check Now (On-demand live market & signal scan)
-  - ℹ️ Strategy Specs (Mechanical rules of each model)
-  - 📜 Recent History (Last executed trades)
-  - ❓ Help & Status (System health & market status)
+Telegram Notification & Interactive Command Engine for FXFX (Robust requests.Session Edition)
+Features:
+  - Persistent connection pooling with requests.Session (eliminates WinError 10054)
+  - Automatic fallback to plain text if HTML formatting ever errors
+  - Strict HTML entity escaping (&lt;, &gt;, &amp;)
+  - Interactive touch menu buttons:
+      📊 Active Trades
+      📈 Strategy Profits
+      ⚡ Check Now
+      ℹ️ Strategy Specs
+      📜 Recent History
+      ❓ Help & Status
 """
 
 import os
 import json
 import logging
-import urllib.request
-import urllib.parse
+import requests
 from datetime import datetime, timezone
 from typing import Optional, Dict, List, Any
 from dotenv import load_dotenv
@@ -27,7 +30,7 @@ OFFSET_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__fil
 
 class TelegramNotifier:
     """
-    Manages Telegram bot communication, interactive keyboards, and commands.
+    Manages Telegram bot communication, interactive touch keyboards, and command processing.
     """
 
     def __init__(self, env_path: str = ".env"):
@@ -37,6 +40,12 @@ class TelegramNotifier:
         self.chat_id = os.getenv("TELEGRAM_CHAT_ID", "1390044763").strip()
         self.base_url = f"https://api.telegram.org/bot{self.token}"
         self.last_update_id = self._load_offset()
+
+        # Persistent session with retries for reliable network connectivity
+        self.session = requests.Session()
+        adapter = requests.adapters.HTTPAdapter(max_retries=3, pool_connections=10, pool_maxsize=10)
+        self.session.mount("https://", adapter)
+        self.session.mount("http://", adapter)
 
     def _load_offset(self) -> int:
         if os.path.exists(OFFSET_FILE):
@@ -68,61 +77,77 @@ class TelegramNotifier:
             "persistent": True
         }
 
-    def send_message(self, text: str, parse_mode: str = "HTML", reply_markup: Optional[Dict[str, Any]] = None) -> bool:
-        """Sends a message to the registered chat_id with optional keyboard markup."""
+    def send_message(self, text: str, parse_mode: Optional[str] = "HTML", reply_markup: Optional[Dict[str, Any]] = None) -> bool:
+        """
+        Sends a message to the registered chat_id.
+        Includes automatic fallback to plain text if HTML tags fail to parse.
+        """
         if not self.chat_id:
             logger.warning("Telegram Chat ID not set!")
             return False
 
-        try:
-            url = f"{self.base_url}/sendMessage"
-            payload = {
-                "chat_id": self.chat_id,
-                "text": text,
-                "parse_mode": parse_mode,
-                "disable_web_page_preview": True
-            }
-            if reply_markup is not None:
-                payload["reply_markup"] = reply_markup
-            else:
-                payload["reply_markup"] = self.get_keyboard_markup()
+        url = f"{self.base_url}/sendMessage"
+        payload = {
+            "chat_id": self.chat_id,
+            "text": text,
+            "disable_web_page_preview": True
+        }
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+        if reply_markup is not None:
+            payload["reply_markup"] = reply_markup
+        else:
+            payload["reply_markup"] = self.get_keyboard_markup()
 
-            data = json.dumps(payload).encode("utf-8")
-            req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                res_data = json.loads(response.read())
-                return res_data.get("ok", False)
-        except Exception as e:
-            logger.error(f"Failed to send Telegram message: {e}")
+        try:
+            resp = self.session.post(url, json=payload, timeout=12)
+            res_json = resp.json()
+
+            if res_json.get("ok"):
+                return True
+
+            # If HTML parsing failed (error 400), retry without HTML formatting
+            err_desc = res_json.get("description", "")
+            logger.warning(f"Telegram API warning: {err_desc}")
+            if "can't parse entities" in err_desc or resp.status_code == 400:
+                logger.info("Retrying message in plain-text mode...")
+                payload.pop("parse_mode", None)
+                retry_resp = self.session.post(url, json=payload, timeout=12)
+                return retry_resp.json().get("ok", False)
+
+            return False
+
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Telegram network connection error: {e}")
             return False
 
     def auto_pair_chat_id(self) -> Optional[str]:
         """Auto-detects chat_id from getUpdates."""
         try:
             url = f"{self.base_url}/getUpdates"
-            with urllib.request.urlopen(url, timeout=10) as resp:
-                data = json.loads(resp.read())
-                if data.get("ok") and data.get("result"):
-                    for update in reversed(data["result"]):
-                        message = update.get("message", {})
-                        chat = message.get("chat", {})
-                        cid = str(chat.get("id", ""))
-                        first_name = chat.get("first_name", "Trader")
-                        username = chat.get("username", "")
+            resp = self.session.get(url, timeout=10)
+            data = resp.json()
+            if data.get("ok") and data.get("result"):
+                for update in reversed(data["result"]):
+                    message = update.get("message", {})
+                    chat = message.get("chat", {})
+                    cid = str(chat.get("id", ""))
+                    first_name = chat.get("first_name", "Trader")
+                    username = chat.get("username", "")
 
-                        if cid:
-                            self.chat_id = cid
-                            self._save_chat_id_to_env(cid)
-                            print(f"[OK] Paired with User: {first_name} (@{username}) | Chat ID: {cid}")
-                            welcome_msg = (
-                                f"🚀 <b>FXFX Institutional Dashboard Connected!</b>\n\n"
-                                f"👤 <b>Trader:</b> {first_name} (@{username})\n"
-                                f"🆔 <b>Chat ID:</b> <code>{cid}</code>\n"
-                                f"📊 <b>Active Strategies:</b> 8 Portfolio Models\n\n"
-                                f"<i>Use the menu buttons below to check live trades, strategy profits, and system status anytime!</i>"
-                            )
-                            self.send_message(welcome_msg, reply_markup=self.get_keyboard_markup())
-                            return cid
+                    if cid:
+                        self.chat_id = cid
+                        self._save_chat_id_to_env(cid)
+                        print(f"[OK] Paired with User: {first_name} (@{username}) | Chat ID: {cid}")
+                        welcome_msg = (
+                            f"🚀 <b>FXFX Institutional Dashboard Connected!</b>\n\n"
+                            f"👤 <b>Trader:</b> {first_name} (@{username})\n"
+                            f"🆔 <b>Chat ID:</b> <code>{cid}</code>\n"
+                            f"📊 <b>Active Strategies:</b> 8 Portfolio Models\n\n"
+                            f"<i>Use the menu buttons below to check live trades, strategy profits, and system status anytime!</i>"
+                        )
+                        self.send_message(welcome_msg, reply_markup=self.get_keyboard_markup())
+                        return cid
             return None
         except Exception as e:
             logger.error(f"Error checking Telegram updates: {e}")
@@ -161,10 +186,13 @@ class TelegramNotifier:
         Polls for button clicks or text commands from the user and answers them instantly.
         """
         try:
-            offset_param = f"?offset={self.last_update_id + 1}" if self.last_update_id > 0 else ""
-            url = f"{self.base_url}/getUpdates{offset_param}"
-            with urllib.request.urlopen(url, timeout=10) as resp:
-                data = json.loads(resp.read())
+            params = {}
+            if self.last_update_id > 0:
+                params["offset"] = self.last_update_id + 1
+
+            url = f"{self.base_url}/getUpdates"
+            resp = self.session.get(url, params=params, timeout=10)
+            data = resp.json()
 
             if not data.get("ok") or not data.get("result"):
                 return
@@ -182,14 +210,17 @@ class TelegramNotifier:
                 logger.info(f"Received Telegram command: '{text}'")
                 self.handle_command(text, engine_context)
 
+        except requests.exceptions.RequestException as e:
+            logger.warning(f"Temporary network hiccup in updates poll: {e}")
         except Exception as e:
             logger.error(f"Error handling updates: {e}")
 
     def handle_command(self, cmd: str, engine_context: Optional[Any] = None):
         """Routes text commands to appropriate handlers."""
-        cmd_lower = cmd.lower()
+        cmd_clean = cmd.strip()
+        cmd_lower = cmd_clean.lower()
 
-        if cmd in ("/start", "/menu") or "menu" in cmd_lower:
+        if cmd_clean in ("/start", "/menu") or "menu" in cmd_lower:
             msg = (
                 "🎛 <b>FXFX Institutional Control Panel</b>\n\n"
                 "Welcome to your automated algorithmic Forex dashboard.\n"
@@ -198,28 +229,28 @@ class TelegramNotifier:
             )
             self.send_message(msg)
 
-        elif "active trade" in cmd_lower or cmd == "📊 Active Trades":
+        elif "active trade" in cmd_lower or "active" in cmd_lower:
             self._reply_active_trades(engine_context)
 
-        elif "profit" in cmd_lower or cmd == "📈 Strategy Profits":
+        elif "profit" in cmd_lower or "leaderboard" in cmd_lower:
             self._reply_strategy_profits()
 
-        elif "check now" in cmd_lower or cmd == "⚡ Check Now":
+        elif "check now" in cmd_lower or "check" in cmd_lower:
             self._reply_check_now(engine_context)
 
-        elif "spec" in cmd_lower or cmd == "ℹ️ Strategy Specs":
+        elif "spec" in cmd_lower or "rule" in cmd_lower:
             self._reply_strategy_specs()
 
-        elif "history" in cmd_lower or cmd == "📜 Recent History":
+        elif "history" in cmd_lower:
             self._reply_recent_history()
 
-        elif "help" in cmd_lower or "status" in cmd_lower or cmd == "❓ Help & Status":
+        elif "help" in cmd_lower or "status" in cmd_lower:
             self._reply_help_status()
 
         else:
             self.send_message(
-                f"🤖 Command not recognized: <i>{cmd}</i>\n"
-                "Please tap one of the buttons below to interact with FXFX.",
+                f"🤖 Command received: <i>{cmd_clean}</i>\n"
+                "Please tap one of the menu buttons below to interact with FXFX.",
                 reply_markup=self.get_keyboard_markup()
             )
 
@@ -315,7 +346,7 @@ class TelegramNotifier:
             f"⏰ <b>Scan Time:</b> {now_str}\n"
             f"────────────────────────\n"
             f"📡 <b>Live Feeds Status:</b> ONLINE\n"
-            f"• <b>EUR/USD:</b> Monitored (15m & 1h)\n"
+            f"• <b>EUR/USD:</b> Monitored (15m &amp; 1h)\n"
             f"• <b>GBP/USD:</b> Monitored (15m)\n"
             f"• <b>EUR/JPY:</b> Monitored (15m)\n"
             f"• <b>USD/CAD:</b> Monitored (15m)\n\n"
@@ -327,7 +358,7 @@ class TelegramNotifier:
         self.send_message(msg)
 
     def _reply_strategy_specs(self):
-        """Displays mechanical rules and parameters."""
+        """Displays mechanical rules and parameters with valid HTML entities."""
         msg = (
             "ℹ️ <b>INSTITUTIONAL STRATEGY SPECIFICATIONS</b>\n"
             "────────────────────────\n"
@@ -336,15 +367,15 @@ class TelegramNotifier:
             "• <i>Pairs:</i> EUR/USD (5 pip buffer), GBP/USD (12 pip buffer), EUR/JPY (15 pip buffer).\n"
             "• <i>Target:</i> 1.5R to 2.5R.\n\n"
             "2️⃣ <b>Institutional Turtle Soup Sweep</b>\n"
-            "• <i>Logic:</i> Detects retail stop-loss sweeps beyond rolling 15-40 bar swing extremes. Enters reversal when candle leaves a rejection wick >= 50-60%.\n"
+            "• <i>Logic:</i> Detects retail stop-loss sweeps beyond rolling 15-40 bar swing extremes. Enters reversal when candle leaves a rejection wick &ge; 50-60%.\n"
             "• <i>Pairs:</i> USD/CAD (5 pip buffer), EUR/JPY (5 pip buffer).\n"
             "• <i>Target:</i> 2.0R to 2.5R.\n\n"
             "3️⃣ <b>Lo-MacKinlay Variance Ratio MR</b>\n"
-            "• <i>Logic:</i> Rejects geometric random walk when VR(4) < 0.80 (sub-diffusive mean-reversion). Enters on extreme price excursion Z >= 2.3.\n"
+            "• <i>Logic:</i> Rejects geometric random walk when VR(4) &lt; 0.80 (sub-diffusive mean-reversion). Enters on extreme price excursion Z &ge; 2.3.\n"
             "• <i>Pair:</i> EUR/USD (1h).\n"
             "• <i>Target:</i> 2.0R.\n"
             "────────────────────────\n"
-            "🚫 <b>0 Technical Indicators.</b> Strictly time, geometry & statistics."
+            "🚫 <b>0 Technical Indicators.</b> Strictly time, geometry &amp; statistics."
         )
         self.send_message(msg)
 
@@ -372,13 +403,13 @@ class TelegramNotifier:
         mkt_status = "🔴 CLOSED (Weekend)" if is_weekend else "🟢 OPEN (Active 24/5)"
 
         msg = (
-            "❓ <b>SYSTEM HEALTH & MARKET STATUS</b>\n"
+            "❓ <b>SYSTEM HEALTH &amp; MARKET STATUS</b>\n"
             "────────────────────────\n"
             f"🌐 <b>Forex Market:</b> {mkt_status}\n"
             f"⏰ <b>UTC Time:</b> <code>{now.strftime('%Y-%m-%d %H:%M:%S')}</code>\n"
             f"🤖 <b>Bot Engine:</b> FXFX v2.0 (Online)\n"
             f"🔄 <b>Actions Schedule:</b> Every 15 mins (*/15 * * * 1-5)\n"
-            f"🛡️ <b>Frictional Modeling:</b> Spreads & Slippage Deducted\n"
+            f"🛡️ <b>Frictional Modeling:</b> Spreads &amp; Slippage Deducted\n"
             f"📱 <b>Telegram Pairing:</b> Active (Chat ID: <code>{self.chat_id}</code>)\n"
             "────────────────────────\n"
             "Tap any button below to refresh data."

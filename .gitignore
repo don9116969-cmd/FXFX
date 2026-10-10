@@ -39,3 +39,4 @@ ENV/
 data/histdata_raw/
 *.zip
 *.tar.gz
+data/telegram_offset.txt
