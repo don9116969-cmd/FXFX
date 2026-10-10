@@ -353,6 +353,9 @@ class LivePortfolioEngine:
         """Processes one check cycle across all strategies and exits (for GitHub Actions)."""
         now_utc = datetime.now(timezone.utc)
         logger.info(f"Running single portfolio check cycle at {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        # Process any pending interactive button clicks or commands from user
+        self.notifier.process_incoming_updates(self)
+
         for strat_cfg in PORTFOLIO_STRATEGIES:
             try:
                 self.process_strategy_cycle(strat_cfg)
@@ -373,11 +376,13 @@ class LivePortfolioEngine:
 
         while True:
             try:
+                # Handle interactive buttons in real time
+                self.notifier.process_incoming_updates(self)
+
                 now_utc = datetime.now(timezone.utc)
                 is_weekend = (now_utc.weekday() == 5) or (now_utc.weekday() == 6 and now_utc.hour < 21) or (now_utc.weekday() == 4 and now_utc.hour >= 22)
                 if is_weekend:
-                    logger.info(f"[Market Closed] Weekend pause active ({now_utc.strftime('%A %H:%M UTC')}). Sleeping...")
-                    time.sleep(300)
+                    time.sleep(10)
                     continue
 
                 for strat_cfg in PORTFOLIO_STRATEGIES:
