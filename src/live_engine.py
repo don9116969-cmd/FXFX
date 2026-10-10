@@ -402,7 +402,8 @@ if __name__ == "__main__":
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8080")), help="Port for health check keep-alive")
     args = parser.parse_args()
 
-    engine = LivePortfolioEngine(risk_per_trade_usd=100.0)
+    risk_val = float(os.getenv("RISK_PER_TRADE_USD", "100.0"))
+    engine = LivePortfolioEngine(risk_per_trade_usd=risk_val)
 
     if args.once:
         engine.run_single_cycle()

@@ -32,6 +32,8 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD || '100.0' }}
+          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE || '10000.0' }}
         run: |
           python -u src/live_engine.py --once
 
