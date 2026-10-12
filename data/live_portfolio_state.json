@@ -1,17 +1,32 @@
 {
-  "strat_7_usdcad_turtle_tight": {
-    "strategy_id": "strat_7_usdcad_turtle_tight",
-    "strategy_name": "Rank 7: Turtle Soup Tight (USDCAD 15m)",
-    "pair": "USDCAD",
+  "strat_4_eurusd_orb": {
+    "strategy_id": "strat_4_eurusd_orb",
+    "strategy_name": "Rank 4: London ORB (EURUSD 15m)",
+    "pair": "EURUSD",
     "timeframe": "15m",
-    "side": 1,
-    "entry_price": 1.424335047416687,
-    "sl": 1.4233999584197998,
-    "tp": 1.4260402254104614,
-    "units": 106941.69253717952,
-    "rr_ratio": 2.0,
-    "max_bars": 28,
+    "side": -1,
+    "entry_price": 1.1192844389343262,
+    "sl": 1.1205971769332885,
+    "tp": 1.1177160543441773,
+    "units": 76176.66288249714,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
     "bars_held": 0,
-    "entry_time_str": "2026-10-12 06:59:50 UTC"
+    "entry_time_str": "2026-10-12 08:20:47 UTC"
+  },
+  "strat_6_eurusd_orb_tight": {
+    "strategy_id": "strat_6_eurusd_orb_tight",
+    "strategy_name": "Rank 6: London ORB Tight (EURUSD 15m)",
+    "pair": "EURUSD",
+    "timeframe": "15m",
+    "side": -1,
+    "entry_price": 1.1192844389343262,
+    "sl": 1.1205971769332885,
+    "tp": 1.1177160543441773,
+    "units": 76176.66288249714,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-12 08:20:47 UTC"
   }
 }
