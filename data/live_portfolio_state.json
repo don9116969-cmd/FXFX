@@ -1,1 +1,32 @@
-{}
+{
+  "strat_4_eurusd_orb": {
+    "strategy_id": "strat_4_eurusd_orb",
+    "strategy_name": "Rank 4: London ORB (EURUSD 15m)",
+    "pair": "EURUSD",
+    "timeframe": "15m",
+    "side": 1,
+    "entry_price": 1.1193544389343262,
+    "sl": 1.1181681819915772,
+    "tp": 1.1207333999633788,
+    "units": 84298.7690072134,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-13 07:31:31 UTC"
+  },
+  "strat_6_eurusd_orb_tight": {
+    "strategy_id": "strat_6_eurusd_orb_tight",
+    "strategy_name": "Rank 6: London ORB Tight (EURUSD 15m)",
+    "pair": "EURUSD",
+    "timeframe": "15m",
+    "side": 1,
+    "entry_price": 1.1193544389343262,
+    "sl": 1.1181681819915772,
+    "tp": 1.1207333999633788,
+    "units": 84298.7690072134,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-13 07:31:32 UTC"
+  }
+}
