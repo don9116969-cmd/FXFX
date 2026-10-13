@@ -13,20 +13,5 @@
     "max_bars": 28,
     "bars_held": 0,
     "entry_time_str": "2026-10-13 07:46:10 UTC"
-  },
-  "strat_1_eurjpy_orb": {
-    "strategy_id": "strat_1_eurjpy_orb",
-    "strategy_name": "Rank 1: London ORB (EURJPY 15m)",
-    "pair": "EURJPY",
-    "timeframe": "15m",
-    "side": -1,
-    "entry_price": 176.49000219726562,
-    "sl": 176.83300018310547,
-    "tp": 175.9855079650879,
-    "units": 291.546901522311,
-    "rr_ratio": 1.5,
-    "max_bars": 32,
-    "bars_held": 1,
-    "entry_time_str": "2026-10-13 09:01:41 UTC"
   }
 }
