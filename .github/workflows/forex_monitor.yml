@@ -1,12 +1,18 @@
 name: FXFX 24/5 Live Portfolio Monitor
 
 on:
-  schedule:
-    # Runs every 15 minutes around the clock (Mon - Fri)
-    - cron: '*/15 * * * 1-5'
+  # GitHub's built-in cron is disabled to prevent duplicate delayed runs.
+  # cron-job.org triggers this workflow on the exact minute via repository_dispatch.
+  # schedule:
+  #   - cron: '*/15 * * * 1-5'
+
   workflow_dispatch: # Allows manual trigger from GitHub UI anytime or via API
-  repository_dispatch: # Allows trigger from cron-job.org webhook
+  repository_dispatch: # Triggered by cron-job.org webhook on exact schedule
     types: [cron_trigger, forex_check]
+
+concurrency:
+  group: live-portfolio-monitor
+  cancel-in-progress: false
 
 permissions:
   contents: write # Allows committing state back to repo
