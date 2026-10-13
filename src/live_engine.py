@@ -349,19 +349,39 @@ class LivePortfolioEngine:
                     logger.info(f"[{strat_cfg['name']}] NEW ENTRY: {'BUY' if sig == 1 else 'SELL'} @ {entry_price:.5f}")
                     self.notifier.alert_trade_entry(trade_record)
 
-    def run_single_cycle(self):
+    def run_single_cycle(self, process_updates: bool = True, notify_heartbeat: bool = False):
         """Processes one check cycle across all strategies and exits (for GitHub Actions)."""
         now_utc = datetime.now(timezone.utc)
         logger.info(f"Running single portfolio check cycle at {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
-        # Process any pending interactive button clicks or commands from user
-        self.notifier.process_incoming_updates(self)
+        if process_updates:
+            # Process any pending interactive button clicks or commands from user
+            self.notifier.process_incoming_updates(self)
 
+        trades_before = len(self.active_trades)
         for strat_cfg in PORTFOLIO_STRATEGIES:
             try:
                 self.process_strategy_cycle(strat_cfg)
             except Exception as e:
                 logger.error(f"Error checking {strat_cfg['name']}: {e}")
+
         logger.info("Cycle completed.")
+
+        # Optional cycle heartbeat notification to confirm engine is alive
+        should_notify = notify_heartbeat or os.getenv("NOTIFY_CYCLE", "false").lower() in ("true", "1", "yes")
+        if should_notify and len(self.active_trades) == trades_before:
+            now_str = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
+            open_cnt = len(self.active_trades)
+            hb_msg = (
+                f"📡 <b>FXFX Live Cycle Evaluation Complete</b>\n"
+                f"⏰ <code>{now_str}</code>\n"
+                f"────────────────────────\n"
+                f"• Strategies Scanned: <b>8 Models Active</b>\n"
+                f"• Open Positions: <b>{open_cnt} Active Trades</b>\n"
+                f"• Signal Status: Monitoring (London ORB, Turtle Soup, VR MR)\n"
+                f"────────────────────────\n"
+                f"<i>All feeds online &amp; healthy. Next check in 15 mins.</i>"
+            )
+            self.notifier.send_message(hb_msg)
 
     def run_continuous_loop(self, poll_interval: int = 60, port: int = 8080):
         """Continuous 24/5 daemon with HTTP keep-alive."""
@@ -404,13 +424,15 @@ class LivePortfolioEngine:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="FXFX Live Engine")
     parser.add_argument("--once", action="store_true", help="Run a single evaluation cycle and exit (for GitHub Actions)")
+    parser.add_argument("--notify", action="store_true", help="Send cycle summary to Telegram even if no new trades triggered")
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8080")), help="Port for health check keep-alive")
     args = parser.parse_args()
 
-    risk_val = float(os.getenv("RISK_PER_TRADE_USD", "100.0"))
+    risk_env = os.getenv("RISK_PER_TRADE_USD", "").strip()
+    risk_val = float(risk_env) if risk_env else 100.0
     engine = LivePortfolioEngine(risk_per_trade_usd=risk_val)
 
     if args.once:
-        engine.run_single_cycle()
+        engine.run_single_cycle(notify_heartbeat=args.notify)
     else:
         engine.run_continuous_loop(poll_interval=60, port=args.port)

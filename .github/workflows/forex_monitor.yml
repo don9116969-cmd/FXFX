@@ -4,7 +4,9 @@ on:
   schedule:
     # Runs every 15 minutes around the clock (Mon - Fri)
     - cron: '*/15 * * * 1-5'
-  workflow_dispatch: # Allows manual trigger from GitHub UI anytime
+  workflow_dispatch: # Allows manual trigger from GitHub UI anytime or via API
+  repository_dispatch: # Allows trigger from cron-job.org webhook
+    types: [cron_trigger, forex_check]
 
 permissions:
   contents: write # Allows committing state back to repo
@@ -30,10 +32,11 @@ jobs:
 
       - name: Run Live Engine Evaluation
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4' }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '1390044763' }}
           RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD || '100.0' }}
           ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE || '10000.0' }}
+          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'false' }}
         run: |
           python -u src/live_engine.py --once
 
@@ -41,8 +44,11 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -f data/live_portfolio_state.json ]; then
-            git add data/live_portfolio_state.json
-            git diff --staged --quiet || git commit -m "chore: update live portfolio state [skip ci]"
+          git add data/live_portfolio_state.json data/telegram_offset.txt 2>/dev/null || true
+          if git diff --staged --quiet; then
+            echo "No state changes to commit."
+          else
+            git commit -m "chore: update live portfolio state [skip ci]"
             git push origin HEAD || true
           fi
+
