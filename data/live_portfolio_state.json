@@ -11,22 +11,7 @@
     "units": 36666.81318341486,
     "rr_ratio": 2.0,
     "max_bars": 32,
-    "bars_held": 4,
+    "bars_held": 5,
     "entry_time_str": "2026-10-13 10:46:06 UTC"
-  },
-  "strat_7_usdcad_turtle_tight": {
-    "strategy_id": "strat_7_usdcad_turtle_tight",
-    "strategy_name": "Rank 7: Turtle Soup Tight (USDCAD 15m)",
-    "pair": "USDCAD",
-    "timeframe": "15m",
-    "side": 1,
-    "entry_price": 1.422684952430725,
-    "sl": 1.4216000173568726,
-    "tp": 1.424660139465332,
-    "units": 92171.41413348891,
-    "rr_ratio": 2.0,
-    "max_bars": 28,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-13 13:46:12 UTC"
   }
 }
