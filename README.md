@@ -54,13 +54,66 @@ FXFX/
 
 ---
 
-## 24/5 Deployment via GitHub Actions
+## 24/5 Deployment & Cron Triggering
 
-This repository is configured to run automatically every 15 minutes via GitHub Actions:
+### Option A: Trigger GitHub Actions via cron-job.org (Eliminate Action Delays)
 
-1. In this repository, navigate to **Settings** $\to$ **Secrets and variables** $\to$ **Actions**.
-2. Add your secrets:
-   - `TELEGRAM_BOT_TOKEN`
-   - `TELEGRAM_CHAT_ID`
-3. Under **Settings** $\to$ **Actions** $\to$ **General** $\to$ **Workflow permissions**, grant **Read and write permissions**.
-4. The workflow will automatically run every 15 minutes Monday through Friday, check all 8 strategies on the latest closed candle, and send instant alerts to your Telegram bot.
+GitHub Actions scheduled crons (`cron: '*/15 * * * 1-5'`) are prone to 15–45 minute queue delays during peak GitHub traffic. You can trigger GitHub Actions **instantly on the exact minute** for free using [cron-job.org](https://cron-job.org/en/):
+
+1. **Generate a GitHub Personal Access Token (PAT):**
+   - Go to GitHub $\to$ **Settings** $\to$ **Developer settings** $\to$ **Personal access tokens** $\to$ **Tokens (classic)**.
+   - Click **Generate new token (classic)**.
+   - Give it a name (e.g., `cron-job-org`) and check the **`repo`** (or **`workflow`**) scope.
+   - Copy the generated token (`ghp_...`).
+
+2. **Create a Job on cron-job.org:**
+   - Sign up / Log in to [cron-job.org](https://cron-job.org/en/).
+   - Click **Create Cronjob**.
+   - **Title:** `FXFX Forex Monitor`
+   - **URL:** `https://api.github.com/repos/Vraj3005/FXFX/dispatches`
+   - **Execution Schedule:** Every 15 minutes (or 5–10 mins), Mon–Fri.
+   - Click **Advanced** / **HTTP Request**:
+     - **Request Method:** `POST`
+     - **Headers:**
+       ```
+       Authorization: Bearer ghp_YOUR_GITHUB_TOKEN_HERE
+       Accept: application/vnd.github+json
+       User-Agent: cron-job-org
+       ```
+     - **Request Body (JSON):**
+       ```json
+       {
+         "event_type": "cron_trigger"
+       }
+       ```
+   - Click **Create**.
+   - Now, cron-job.org will ping GitHub every 15 minutes, triggering your workflow within **5 to 10 seconds**!
+
+---
+
+### Option B: Interactive Real-Time Telegram Control Panel
+
+If you want **instant 1-second replies** to touch menu buttons (Active Trades, Strategy Profits, Check Now, Specs, History, Status):
+
+Run the interactive listener daemon:
+```bash
+python scripts/run_telegram_bot.py
+```
+Or run the full 24/5 live monitoring daemon:
+```bash
+python src/live_engine.py
+```
+*(The live engine includes a built-in health-check server on port 8080. If hosting on Render.com or Koyeb, set cron-job.org to ping `https://your-service.onrender.com/` every 10 minutes to keep it awake 24/5 for free!)*
+
+---
+
+### GitHub Actions Secrets Configuration
+
+In your repository under **Settings** $\to$ **Secrets and variables** $\to$ **Actions**:
+- `TELEGRAM_BOT_TOKEN`: Your Telegram Bot API token (e.g., `8921977032:AAGtcA...`)
+- `TELEGRAM_CHAT_ID`: Your personal Telegram Chat ID (e.g., `1390044763`)
+- `RISK_PER_TRADE_USD`: (Optional, default `100.0`)
+- `NOTIFY_CYCLE`: (Optional, set to `true` if you want a Telegram heartbeat on every check cycle)
+
+Under **Settings** $\to$ **Actions** $\to$ **General** $\to$ **Workflow permissions**, grant **Read and write permissions** so the runner can persist trade state.
+
