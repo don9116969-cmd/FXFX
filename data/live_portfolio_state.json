@@ -11,7 +11,7 @@
     "units": 36666.81318341486,
     "rr_ratio": 2.0,
     "max_bars": 32,
-    "bars_held": 6,
+    "bars_held": 7,
     "entry_time_str": "2026-10-13 10:46:06 UTC"
   },
   "strat_6_eurusd_orb_tight": {
@@ -28,5 +28,20 @@
     "max_bars": 32,
     "bars_held": 0,
     "entry_time_str": "2026-10-14 09:01:41 UTC"
+  },
+  "strat_4_eurusd_orb": {
+    "strategy_id": "strat_4_eurusd_orb",
+    "strategy_name": "Rank 4: London ORB (EURUSD 15m)",
+    "pair": "EURUSD",
+    "timeframe": "15m",
+    "side": -1,
+    "entry_price": 1.1195351360702515,
+    "sl": 1.1205971769332885,
+    "tp": 1.1180295747756959,
+    "units": 94158.33559740282,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-14 09:31:22 UTC"
   }
 }
