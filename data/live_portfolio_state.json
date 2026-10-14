@@ -1,1 +1,17 @@
-{}
+{
+  "strat_8_eurusd_variance_ratio": {
+    "strategy_id": "strat_8_eurusd_variance_ratio",
+    "strategy_name": "Rank 8: Variance Ratio MR (EURUSD 1h)",
+    "pair": "EURUSD",
+    "timeframe": "1h",
+    "side": 1,
+    "entry_price": 1.1130010606384277,
+    "sl": 1.1109922988213548,
+    "tp": 1.1172851596281035,
+    "units": 49781.9100054939,
+    "rr_ratio": 2.0,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-14 13:01:45 UTC"
+  }
+}
