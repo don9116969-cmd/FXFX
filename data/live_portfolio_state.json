@@ -1,17 +1,1 @@
-{
-  "strat_2_gbpusd_orb": {
-    "strategy_id": "strat_2_gbpusd_orb",
-    "strategy_name": "Rank 2: London ORB (GBPUSD 15m)",
-    "pair": "GBPUSD",
-    "timeframe": "15m",
-    "side": 1,
-    "entry_price": 1.324483207511902,
-    "sl": 1.3217559456825256,
-    "tp": 1.3297877311706543,
-    "units": 36666.81318341486,
-    "rr_ratio": 2.0,
-    "max_bars": 32,
-    "bars_held": 9,
-    "entry_time_str": "2026-10-13 10:46:06 UTC"
-  }
-}
+{}
