@@ -159,6 +159,7 @@ class LivePortfolioEngine:
         self.risk_per_trade_usd = risk_per_trade_usd
         self.active_trades: Dict[str, Dict[str, Any]] = self._load_state()
         self.last_bar_times: Dict[str, Any] = {}
+        self._data_cache: Dict[str, pd.DataFrame] = {}
 
     def _load_state(self) -> Dict[str, Dict[str, Any]]:
         if os.path.exists(STATE_FILE):
@@ -178,22 +179,53 @@ class LivePortfolioEngine:
             logger.error(f"Error saving state: {e}")
 
     def fetch_live_data(self, ticker: str, period: str, interval: str) -> Optional[pd.DataFrame]:
+        """
+        Robust live data fetcher using yf.Ticker.history with automatic retries and per-cycle caching.
+        Eliminates 'NoneType' object is not subscriptable crashes.
+        """
+        cache_key = f"{ticker}_{period}_{interval}"
+        if cache_key in self._data_cache:
+            return self._data_cache[cache_key].copy()
+
+        # Primary robust method: Ticker.history
+        for attempt in range(3):
+            try:
+                t = yf.Ticker(ticker)
+                df = t.history(period=period, interval=interval)
+                if df is not None and not df.empty and len(df) >= 30:
+                    if isinstance(df.columns, pd.MultiIndex):
+                        df.columns = df.columns.get_level_values(0)
+                    df = df.rename(columns={c: c.capitalize() for c in df.columns})
+                    df = df.dropna(subset=["Open", "High", "Low", "Close"])
+                    if df.index.tz is None:
+                        df.index = df.index.tz_localize("UTC")
+                    else:
+                        df.index = df.index.tz_convert("UTC")
+                    df = df.sort_index()
+                    self._data_cache[cache_key] = df
+                    return df.copy()
+            except Exception as e:
+                time.sleep(1)
+
+        # Fallback method: yf.download
         try:
             df = yf.download(tickers=ticker, period=period, interval=interval, auto_adjust=False, progress=False)
-            if df.empty:
-                return None
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
-            df = df.rename(columns={c: c.capitalize() for c in df.columns})
-            df = df.dropna(subset=["Open", "High", "Low", "Close"])
-            if df.index.tz is None:
-                df.index = df.index.tz_localize("UTC")
-            else:
-                df.index = df.index.tz_convert("UTC")
-            return df.sort_index()
+            if df is not None and not df.empty and len(df) >= 30:
+                if isinstance(df.columns, pd.MultiIndex):
+                    df.columns = df.columns.get_level_values(0)
+                df = df.rename(columns={c: c.capitalize() for c in df.columns})
+                df = df.dropna(subset=["Open", "High", "Low", "Close"])
+                if df.index.tz is None:
+                    df.index = df.index.tz_localize("UTC")
+                else:
+                    df.index = df.index.tz_convert("UTC")
+                df = df.sort_index()
+                self._data_cache[cache_key] = df
+                return df.copy()
         except Exception as e:
             logger.error(f"Live data fetch error for {ticker}: {e}")
-            return None
+
+        return None
 
     def evaluate_strategy_signals(self, strat_cfg: Dict[str, Any], df: pd.DataFrame) -> pd.DataFrame:
         stype = strat_cfg["type"]
@@ -353,6 +385,7 @@ class LivePortfolioEngine:
         """Processes one check cycle across all strategies and exits (for GitHub Actions)."""
         now_utc = datetime.now(timezone.utc)
         logger.info(f"Running single portfolio check cycle at {now_utc.strftime('%Y-%m-%d %H:%M:%S UTC')}")
+        self._data_cache.clear()
         if process_updates:
             # Process any pending interactive button clicks or commands from user
             self.notifier.process_incoming_updates(self)
