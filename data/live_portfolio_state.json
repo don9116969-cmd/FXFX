@@ -1,19 +1,4 @@
 {
-  "strat_8_eurusd_variance_ratio": {
-    "strategy_id": "strat_8_eurusd_variance_ratio",
-    "strategy_name": "Rank 8: Variance Ratio MR (EURUSD 1h)",
-    "pair": "EURUSD",
-    "timeframe": "1h",
-    "side": 1,
-    "entry_price": 1.1130010606384277,
-    "sl": 1.1109922988213548,
-    "tp": 1.1172851596281035,
-    "units": 49781.9100054939,
-    "rr_ratio": 2.0,
-    "max_bars": 32,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-14 13:01:45 UTC"
-  },
   "strat_5_eurjpy_turtle": {
     "strategy_id": "strat_5_eurjpy_turtle",
     "strategy_name": "Rank 5: Turtle Soup Sweep (EURJPY 15m)",
@@ -26,22 +11,7 @@
     "units": 714.2938108777555,
     "rr_ratio": 2.0,
     "max_bars": 28,
-    "bars_held": 1,
+    "bars_held": 2,
     "entry_time_str": "2026-10-14 18:46:15 UTC"
-  },
-  "strat_7_usdcad_turtle_tight": {
-    "strategy_id": "strat_7_usdcad_turtle_tight",
-    "strategy_name": "Rank 7: Turtle Soup Tight (USDCAD 15m)",
-    "pair": "USDCAD",
-    "timeframe": "15m",
-    "side": 1,
-    "entry_price": 1.4231349674987792,
-    "sl": 1.4223000143051148,
-    "tp": 1.4248498014450073,
-    "units": 119767.19265078766,
-    "rr_ratio": 2.0,
-    "max_bars": 28,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-14 21:16:08 UTC"
   }
 }
