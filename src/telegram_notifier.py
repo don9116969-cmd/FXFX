@@ -402,8 +402,8 @@ def format_portfolio_summary_card() -> Tuple[str, Dict[str, Any]]:
     return msg, inline_kb
 
 
-def format_journal_recent_card() -> Tuple[str, Dict[str, Any]]:
-    """Generates the latest 5 closed trades from the journal."""
+def format_journal_page_card(page: int = 1, page_size: int = 5) -> Tuple[str, Dict[str, Any]]:
+    """Generates paginated trade journal card with interactive inline navigation."""
     inline_kb = get_inline_status_markup()
     if not os.path.exists(JOURNAL_CSV_FILE):
         return "ℹ️ *No trade journal found yet.*", inline_kb
@@ -416,25 +416,89 @@ def format_journal_recent_card() -> Tuple[str, Dict[str, Any]]:
     if df.empty:
         return "ℹ️ *No closed trades logged yet in journal.*", inline_kb
 
-    recent = df.tail(5).iloc[::-1]
+    tot_trades = len(df)
+    wins = len(df[df["net_pnl"] > 0]) if not df.empty and "net_pnl" in df.columns else 0
+    losses = len(df[df["net_pnl"] <= 0]) if not df.empty and "net_pnl" in df.columns else 0
+    wr = (wins / tot_trades * 100.0) if tot_trades > 0 else 0.0
+    tot_pnl = float(df["net_pnl"].sum()) if not df.empty and "net_pnl" in df.columns else 0.0
+    current_bal = config.INITIAL_CAPITAL + tot_pnl
+    ret_pct = ((current_bal - config.INITIAL_CAPITAL) / config.INITIAL_CAPITAL) * 100.0
+
+    pnl_str = f"+${tot_pnl:,.2f}" if tot_pnl >= 0 else f"-${abs(tot_pnl):,.2f}"
+    ret_str = f"+{ret_pct:.1f}%" if ret_pct >= 0 else f"{ret_pct:.1f}%"
+
+    # Reverse order so newest trades are shown first
+    df_rev = df.iloc[::-1].reset_index(drop=True)
+
+    total_pages = max(1, (tot_trades + page_size - 1) // page_size)
+    page = max(1, min(page, total_pages))
+
+    start_idx = (page - 1) * page_size
+    end_idx = min(start_idx + page_size, tot_trades)
+    page_trades = df_rev.iloc[start_idx:end_idx]
+
     msg = (
-        f"📖 *LATEST 5 CLOSED TRADES (TRADE JOURNAL)*\n"
+        f"📖 *FOREX TRADE JOURNAL (Page {page}/{total_pages})*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 *Portfolio Ledger Metrics:*\n"
+        f"• Total Logged Trades: *{tot_trades}* ({wins} Wins / {losses} Losses)\n"
+        f"• Win Rate: *{wr:.1f}%* | Net PnL: *{pnl_str}*\n"
+        f"• Current Balance: *${current_bal:,.2f}* ({ret_str} Return)\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"*Trades ({start_idx + 1} to {end_idx} of {tot_trades}):*\n\n"
     )
-    for _, r in recent.iterrows():
+
+    for i, (_, r) in enumerate(page_trades.iterrows(), start=start_idx + 1):
         net = float(r.get("net_pnl", 0.0))
         sign = "+" if net > 0 else ""
         emoji = "🟢" if net > 0 else "🔴"
         pair = str(r.get("pair", ""))
         side = str(r.get("side", ""))
         s_name = str(r.get("strategy_name", r.get("strategy", "")))
+        date_str = str(r.get("date", ""))
+        entry_t = str(r.get("entry_time", ""))
+        exit_t = str(r.get("exit_time", ""))
+        reason = str(r.get("exit_reason", ""))
+        entry_p = float(r.get("entry_price", 0.0))
+        exit_p = float(r.get("exit_price", 0.0))
+        dec = 2 if "JPY" in pair else 4
+
+        e_part = entry_t.split(" ")[1][:5] if " " in entry_t else entry_t
+        x_part = exit_t.split(" ")[1][:5] if " " in exit_t else exit_t
+
         msg += (
-            f"{emoji} *{r.get('date')}* | `{pair} {side}`\n"
-            f"   • Strategy: `{s_name}`\n"
-            f"   • Times: {r.get('entry_time')} → {r.get('exit_time')}\n"
-            f"   • Net PnL: *{sign}${net:,.2f}* | Reason: `{r.get('exit_reason')}`\n\n"
+            f"{emoji} *#{i}* `{date_str}` | *{pair}* `{side}`\n"
+            f"   • {s_name}\n"
+            f"   • {e_part} → {x_part} | `{entry_p:.{dec}f}` → `{exit_p:.{dec}f}`\n"
+            f"   • Net PnL: *{sign}${net:,.2f}* ({reason})\n\n"
         )
-    return msg, inline_kb
+
+    prev_page = max(1, page - 1)
+    next_page = min(total_pages, page + 1)
+
+    nav_buttons = [
+        [
+            {"text": "⏮️ First", "callback_data": "journal_page_1"},
+            {"text": "◀️ Prev", "callback_data": f"journal_page_{prev_page}"},
+            {"text": f"📄 {page}/{total_pages}", "callback_data": "noop"},
+            {"text": "▶️ Next", "callback_data": f"journal_page_{next_page}"},
+            {"text": "⏭️ Last", "callback_data": f"journal_page_{total_pages}"}
+        ],
+        [
+            {"text": "📊 Live Status & PnL", "callback_data": "status"},
+            {"text": "💼 Portfolio Balance", "callback_data": "summary"}
+        ],
+        [
+            {"text": "🔄 Refresh", "callback_data": f"journal_page_{page}"}
+        ]
+    ]
+
+    return msg, {"inline_keyboard": nav_buttons}
+
+
+def format_journal_recent_card() -> Tuple[str, Dict[str, Any]]:
+    """Backward compatibility alias for format_journal_page_card."""
+    return format_journal_page_card(page=1)
 
 
 def format_strategy_specs_card() -> Tuple[str, Dict[str, Any]]:
@@ -620,8 +684,16 @@ class TelegramNotifier:
                         card_text, markup = format_today_trades_card()
                     elif cb_data in ["summary", "balance"]:
                         card_text, markup = format_portfolio_summary_card()
-                    elif cb_data == "journal":
-                        card_text, markup = format_journal_recent_card()
+                    elif cb_data.startswith("journal"):
+                        page = 1
+                        if "page_" in cb_data:
+                            try:
+                                page = int(cb_data.split("page_")[-1])
+                            except Exception:
+                                page = 1
+                        card_text, markup = format_journal_page_card(page=page)
+                    elif cb_data == "noop":
+                        continue
 
                     if card_text:
                         edited = False
@@ -868,10 +940,16 @@ def run_telegram_polling_loop(engine=None, stop_event: Optional[threading.Event]
                                     card_text, markup = format_live_status_card(engine=engine)
                                 elif cb_data == "today":
                                     card_text, markup = format_today_trades_card()
-                                elif cb_data in ["summary", "balance"]:
-                                    card_text, markup = format_portfolio_summary_card()
-                                elif cb_data == "journal":
-                                    card_text, markup = format_journal_recent_card()
+                                elif cb_data.startswith("journal"):
+                                    page = 1
+                                    if "page_" in cb_data:
+                                        try:
+                                            page = int(cb_data.split("page_")[-1])
+                                        except Exception:
+                                            page = 1
+                                    card_text, markup = format_journal_page_card(page=page)
+                                elif cb_data == "noop":
+                                    continue
 
                                 if card_text:
                                     edited = False
