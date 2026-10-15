@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-15 12:46:09 UTC*
+*Last Updated: 2026-10-15 13:01:47 UTC*
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 3: Turtle Soup Sweep (USDCAD 15m)** | `USDCAD` | 🔴 SELL | 2026-10-15 12:46:06 UTC | `1.42037` | `1.41636` | `1.42242` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 3: Turtle Soup Sweep (USDCAD 15m)** | `USDCAD` | 🔴 SELL | 2026-10-15 12:46:06 UTC | `1.42037` | `1.41636` | `1.42242` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
