@@ -1,0 +1,92 @@
+"""
+Automated Git Synchronization Engine for FXFX Trading Bot.
+Automatically commits and pushes live active positions, trade journal, and alerts to GitHub.
+"""
+
+import os
+import subprocess
+import time
+import logging
+
+logger = logging.getLogger("GitSync")
+
+def git_sync_push(commit_msg: str, max_retries: int = 2) -> bool:
+    """
+    Stages and pushes journal, active positions, and offset state to GitHub remote.
+    Uses strict timeouts and non-interactive flags so it never blocks trading execution.
+    """
+    try:
+        # Check if inside git repository
+        repo_check = subprocess.run(["git", "rev-parse", "--is-inside-work-tree"], capture_output=True, text=True, timeout=5)
+        if repo_check.returncode != 0:
+            return False
+
+        # Set user if not already configured
+        subprocess.run(["git", "config", "user.name", "FXFX Bot Cloud Runner"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+        subprocess.run(["git", "config", "user.email", "bot@github-actions.internal"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=5)
+
+        files_to_add = [
+            "data/live_portfolio_state.json",
+            "data/trade_journal.csv",
+            "data/trade_journal.md",
+            "data/sent_alerts.json",
+            "data/telegram_offset.txt"
+        ]
+        existing_files = [f for f in files_to_add if os.path.exists(f)]
+        if not existing_files:
+            return False
+
+        subprocess.run(["git", "add"] + existing_files, check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=8)
+
+        # Check if there are changes staged
+        diff_res = subprocess.run(["git", "diff", "--staged", "--quiet"], check=False, timeout=5)
+        if diff_res.returncode == 0:
+            return True  # Nothing new to commit
+
+        # Commit changes locally
+        subprocess.run(["git", "commit", "-m", f"{commit_msg} [skip ci]"], check=False, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, timeout=10)
+
+        is_ci = bool(os.getenv("GITHUB_ACTIONS"))
+        retries = max_retries if is_ci else 1
+        timeout_sec = 15 if is_ci else 6
+
+        git_env = os.environ.copy()
+        git_env["GIT_TERMINAL_PROMPT"] = "0"
+
+        # Check for remote target
+        remote_target = "origin"
+        token = os.getenv("GITHUB_TOKEN")
+        repo = os.getenv("GITHUB_REPOSITORY")
+        if token and repo:
+            remote_target = f"https://x-access-token:{token}@github.com/{repo}.git"
+
+        for attempt in range(retries):
+            try:
+                subprocess.run(
+                    ["git", "pull", "--rebase", "--autostash", remote_target, "main"],
+                    check=False,
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                    env=git_env,
+                    timeout=timeout_sec
+                )
+                push_res = subprocess.run(
+                    ["git", "push", remote_target, "main"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    env=git_env,
+                    timeout=timeout_sec
+                )
+                if push_res.returncode == 0:
+                    logger.info(f"[GIT-SYNC] Successfully synced to GitHub: '{commit_msg}'")
+                    return True
+            except subprocess.TimeoutExpired:
+                pass
+            time.sleep(1)
+
+        logger.info("[GIT-SYNC] Local commit recorded. Remote push deferred.")
+        return False
+    except Exception as e:
+        logger.warning(f"[GIT-SYNC] Auto-sync notice: {e}")
+        return False

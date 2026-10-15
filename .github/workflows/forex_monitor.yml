@@ -5,7 +5,7 @@ on:
     # Automated fallback: Runs every 15 minutes around the clock (Mon - Fri)
     - cron: '*/15 * * * 1-5'
   workflow_dispatch: # Allows manual trigger from GitHub UI anytime or via API
-  repository_dispatch: # Triggered by cron-job.org webhook on exact schedule
+  repository_dispatch: # Triggered by external webhook on exact schedule
     types: [cron_trigger, forex_check]
 
 concurrency:
@@ -14,10 +14,12 @@ concurrency:
 
 permissions:
   contents: write # Allows committing state back to repo
+  actions: write  # Allows cancelling redundant queued workflow runs
 
 jobs:
   check-signals:
     runs-on: ubuntu-latest
+    timeout-minutes: 12
 
     steps:
       - name: Checkout Code
@@ -40,19 +42,35 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '1390044763' }}
           RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD || '100.0' }}
           ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE || '10000.0' }}
-          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'true' }}
+          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'false' }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          git config --global user.name "FXFX Bot Cloud Runner"
+          git config --global user.email "bot@github-actions.internal"
           python -u src/live_engine.py --once
 
-      - name: Commit State Changes (if any active trade updated)
+      - name: Commit and Push Journal & State Updates
+        if: always()
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/live_portfolio_state.json data/telegram_offset.txt 2>/dev/null || true
+          git config --global user.name "FXFX Bot Cloud Runner"
+          git config --global user.email "bot@github-actions.internal"
+          git add data/live_portfolio_state.json data/trade_journal.csv data/trade_journal.md data/sent_alerts.json data/telegram_offset.txt || true
           if git diff --staged --quiet; then
-            echo "No state changes to commit."
+            echo "No journal or state changes to commit."
           else
-            git commit -m "chore: update live portfolio state [skip ci]"
-            git push origin HEAD || true
+            git commit -m "Auto-update forex trade journal and state [skip ci]"
+            git pull --rebase --autostash origin main || true
+            git push origin main || echo "Git push deferred."
           fi
 
+      - name: Clean Up Redundant Queued Runs
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run list --workflow forex_monitor.yml --status waiting --json databaseId --jq '.[].databaseId' 2>/dev/null | while read -r run_id; do
+            if [ -n "$run_id" ]; then
+              echo "Cancelling redundant queued run: $run_id"
+              gh run cancel "$run_id" || true
+            fi
+          done || true

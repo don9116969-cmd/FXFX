@@ -1,54 +1,483 @@
 """
-Telegram Notification & Interactive Command Engine for FXFX (Robust requests.Session Edition)
-Features:
-  - Persistent connection pooling with requests.Session (eliminates WinError 10054)
-  - Automatic fallback to plain text if HTML formatting ever errors
-  - Strict HTML entity escaping (&lt;, &gt;, &amp;)
-  - Interactive touch menu buttons:
-      📊 Active Trades
-      📈 Strategy Profits
-      ⚡ Check Now
-      ℹ️ Strategy Specs
-      📜 Recent History
-      ❓ Help & Status
+Telegram Notification & Interactive Command Engine for FXFX.
+Modeled after the high-performance Nifty Option Bot architecture:
+- In-place message editing via editMessageText & answerCallbackQuery
+- Dual-Keyboard layout (Persistent Touch Reply Keyboard + Inline Refresh Buttons)
+- Alert deduplication engine (sent_alerts.json) to eliminate duplicate notifications
+- Rich live status & floating PnL cards
+- Today's closed trades ledger & cumulative portfolio analytics
+- Automatic chat ID pairing & authorization security
 """
 
 import os
+import sys
 import time
 import json
 import logging
+import threading
 import requests
-from datetime import datetime, timezone
-from typing import Optional, Dict, List, Any
+import pandas as pd
+from datetime import datetime, timezone, timedelta
+from typing import Optional, Dict, List, Any, Tuple
 from dotenv import load_dotenv
+
+if hasattr(sys.stdout, "reconfigure"):
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
+from config import config
 
 load_dotenv()
 logger = logging.getLogger("TelegramNotifier")
 
-STATE_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "live_portfolio_state.json")
-OFFSET_FILE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "data", "telegram_offset.txt")
+STATE_FILE = config.STATE_FILE
+JOURNAL_CSV_FILE = config.JOURNAL_CSV_FILE
+JOURNAL_MD_FILE = config.JOURNAL_MD_FILE
+SENT_ALERTS_FILE = config.SENT_ALERTS_FILE
+OFFSET_FILE = config.OFFSET_FILE
 
 
+def get_telegram_token() -> str:
+    token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
+    return token if token else "8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4"
+
+
+def get_or_detect_chat_id() -> str:
+    """
+    Returns TELEGRAM_CHAT_ID from environment.
+    If empty, queries getUpdates to automatically detect and store the user's Chat ID.
+    """
+    chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
+    if chat_id and chat_id != "0":
+        return chat_id
+
+    token = get_telegram_token()
+    if not token:
+        return "1390044763"
+
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
+    try:
+        resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code == 200:
+            data = resp.json()
+            if data and data.get("ok") and data.get("result"):
+                for update in reversed(data["result"]):
+                    msg = update.get("message") or update.get("channel_post") or update.get("callback_query", {}).get("message")
+                    if msg and "chat" in msg:
+                        detected_id = str(msg["chat"]["id"])
+                        return detected_id
+    except Exception as e:
+        logger.warning(f"Failed to auto-detect Telegram Chat ID: {e}")
+
+    return "1390044763"
+
+
+# =============================================================================
+# ALERT DEDUPLICATION ENGINE
+# =============================================================================
+def is_alert_already_sent(alert_key: str) -> bool:
+    """Checks if an alert key has already been dispatched to prevent duplicates."""
+    if not alert_key or not os.path.exists(SENT_ALERTS_FILE):
+        return False
+    try:
+        with open(SENT_ALERTS_FILE, "r", encoding="utf-8") as f:
+            data = json.load(f)
+            return alert_key in data
+    except Exception:
+        return False
+
+
+def mark_alert_as_sent(alert_key: str):
+    """Records an alert key in sent_alerts.json with FIFO pruning at 2000 records."""
+    if not alert_key:
+        return
+    os.makedirs(os.path.dirname(SENT_ALERTS_FILE) or "data", exist_ok=True)
+    data = {}
+    if os.path.exists(SENT_ALERTS_FILE):
+        try:
+            with open(SENT_ALERTS_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+        except Exception:
+            data = {}
+    data[alert_key] = datetime.now(timezone.utc).isoformat()
+    if len(data) > 2000:
+        keys_to_remove = list(data.keys())[:-2000]
+        for k in keys_to_remove:
+            del data[k]
+    try:
+        with open(SENT_ALERTS_FILE, "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=2)
+    except Exception as e:
+        logger.warning(f"Failed to write sent_alerts.json: {e}")
+
+
+# =============================================================================
+# KEYBOARD MARKUPS
+# =============================================================================
+def get_main_keyboard_markup() -> Dict[str, Any]:
+    """Returns the persistent 1-tap touch reply keyboard."""
+    return {
+        "keyboard": [
+            [{"text": "📊 Live Status & PnL"}, {"text": "📜 Today's Trades"}],
+            [{"text": "💼 Portfolio Balance"}, {"text": "📖 Trade Journal"}],
+            [{"text": "⚡ Check Now"}, {"text": "ℹ️ Strategy Specs"}]
+        ],
+        "resize_keyboard": True,
+        "is_persistent": True
+    }
+
+
+def get_inline_status_markup() -> Dict[str, Any]:
+    """Returns inline buttons for instant in-place card updates."""
+    return {
+        "inline_keyboard": [
+            [
+                {"text": "📊 Live Status & PnL", "callback_data": "status"},
+                {"text": "📜 Today's Trades", "callback_data": "today"}
+            ],
+            [
+                {"text": "💼 Portfolio Balance", "callback_data": "summary"},
+                {"text": "🔄 Refresh", "callback_data": "refresh"}
+            ]
+        ]
+    }
+
+
+# =============================================================================
+# FORMATTERS FOR RICH STATUS CARDS
+# =============================================================================
+def get_latest_pair_spot(pair: str, fallback: float = 0.0) -> float:
+    """Helper to fetch quick spot price for floating PnL calculation."""
+    ticker_map = {
+        "EURUSD": "EURUSD=X",
+        "GBPUSD": "GBPUSD=X",
+        "EURJPY": "EURJPY=X",
+        "USDCAD": "USDCAD=X",
+        "AUDUSD": "AUDUSD=X",
+        "NZDUSD": "NZDUSD=X",
+        "USDCHF": "USDCHF=X",
+        "GBPJPY": "GBPJPY=X"
+    }
+    ticker = ticker_map.get(pair.upper(), f"{pair}=X")
+    try:
+        import yfinance as yf
+        t = yf.Ticker(ticker)
+        fast_info = getattr(t, "fast_info", None)
+        if fast_info and hasattr(fast_info, "last_price") and fast_info.last_price:
+            return float(fast_info.last_price)
+        h = t.history(period="1d", interval="15m")
+        if h is not None and not h.empty:
+            return float(h["Close"].iloc[-1])
+    except Exception:
+        pass
+    return fallback
+
+
+def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
+    """Generates the live status & floating unrealized PnL card."""
+    now_utc = datetime.now(timezone.utc)
+    now_ist = now_utc + timedelta(hours=5, minutes=30)
+    time_str = f"{now_utc.strftime('%H:%M:%S')} UTC ({now_ist.strftime('%I:%M:%S %p')} IST)"
+    date_str = now_utc.strftime("%A, %d-%b-%Y")
+    inline_kb = get_inline_status_markup()
+
+    # Load active trades
+    active_trades = {}
+    if engine and hasattr(engine, "active_trades") and engine.active_trades:
+        active_trades = engine.active_trades
+    elif os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if isinstance(data, dict):
+                    active_trades = {k: v for k, v in data.items() if v}
+        except Exception:
+            active_trades = {}
+
+    if not active_trades:
+        today_date_str = now_utc.strftime("%Y-%m-%d")
+        today_count = 0
+        today_pnl = 0.0
+        if os.path.exists(JOURNAL_CSV_FILE):
+            try:
+                df = pd.read_csv(JOURNAL_CSV_FILE)
+                if not df.empty and "date" in df.columns and "net_pnl" in df.columns:
+                    t_df = df[df["date"].astype(str) == today_date_str]
+                    today_count = len(t_df)
+                    today_pnl = float(t_df["net_pnl"].sum())
+            except Exception:
+                pass
+
+        p_sign = "+" if today_pnl > 0 else ""
+        today_perf_str = (
+            f"• Closed Trades Today: {today_count}\n"
+            f"• Realized Net PnL: *{p_sign}${today_pnl:+,.2f}*\n"
+        ) if today_count > 0 else "• Closed Trades Today: 0 (No completed exits yet)\n"
+
+        msg = (
+            f"⚪ *NO OPEN POSITIONS IN-FLIGHT*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⏰ *Status Time:* {time_str}\n"
+            f"📅 *Date:* {date_str}\n"
+            f"💼 *Risk Deployed:* $0.00 / $400.00 Max\n"
+            f"🛡️ *State:* `Standby & Monitoring Live Candles`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📈 *Today's Session So Far:*\n"
+            f"{today_perf_str}"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"Bot is scanning 15m & 1h market candles across all 8 quantitative models:\n"
+            f"• Rank 1: London ORB (EURJPY 15m)\n"
+            f"• Rank 2: London ORB (GBPUSD 15m)\n"
+            f"• Rank 3: Turtle Soup Sweep (USDCAD 15m)\n"
+            f"• Rank 4: London ORB (EURUSD 15m)\n"
+            f"• Rank 5: Turtle Soup Sweep (EURJPY 15m)\n"
+            f"• Rank 6: London ORB Tight (EURUSD 15m)\n"
+            f"• Rank 7: Turtle Soup Tight (USDCAD 15m)\n"
+            f"• Rank 8: Variance Ratio MR (EURUSD 1h)\n\n"
+            f"🔔 *Instant notification will fire the exact second a trade enters!*"
+        )
+        return msg, inline_kb
+
+    # Active open trades exist
+    count = len(active_trades)
+    msg = (
+        f"🟢 *ACTIVE IN-FLIGHT POSITIONS ({count} Open)*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⏰ *Check Time:* {time_str}\n"
+        f"📅 *Date:* {date_str}\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+    )
+
+    for sid, pos in active_trades.items():
+        s_name = pos.get("strategy_name", sid)
+        pair = pos.get("pair", "FOREX")
+        side = pos.get("side", 1)
+        side_str = "🟢 BUY (LONG)" if side == 1 else "🔴 SELL (SHORT)"
+        entry_p = float(pos.get("entry_price", 0.0))
+        sl_p = float(pos.get("sl", 0.0))
+        tp_p = float(pos.get("tp", 0.0))
+        units = float(pos.get("units", 0.0))
+        bars = int(pos.get("bars_held", 0))
+        max_bars = int(pos.get("max_bars", 32))
+        entry_t_str = str(pos.get("entry_time_str", "Active"))
+
+        # Spot price and floating PnL
+        cur_spot = get_latest_pair_spot(pair, fallback=entry_p)
+        dec = 2 if "JPY" in pair else 4
+        pip_size = 0.01 if "JPY" in pair else 0.0001
+        pips_diff = (cur_spot - entry_p) / pip_size if side == 1 else (entry_p - cur_spot) / pip_size
+
+        if side == 1:
+            unrealized_pnl = (cur_spot - entry_p) * units
+            unrealized_pct = ((cur_spot - entry_p) / max(0.0001, entry_p)) * 100.0
+        else:
+            unrealized_pnl = (entry_p - cur_spot) * units
+            unrealized_pct = ((entry_p - cur_spot) / max(0.0001, entry_p)) * 100.0
+
+        p_emoji = "🟢" if unrealized_pnl >= 0 else "🔴"
+        pnl_str = f"+${unrealized_pnl:,.2f}" if unrealized_pnl >= 0 else f"-${abs(unrealized_pnl):,.2f}"
+        pct_str = f"+{unrealized_pct:.2f}%" if unrealized_pct >= 0 else f"{unrealized_pct:.2f}%"
+
+        msg += (
+            f"💱 *{pair}* | *{side_str}*\n"
+            f"📊 *Strategy:* `{s_name}`\n"
+            f"⏰ *Entry Time:* `{entry_t_str}` ({bars}/{max_bars} bars held)\n"
+            f"📍 *Price:* Entry `{entry_p:.{dec}f}` → Live `{cur_spot:.{dec}f}` ({pips_diff:+.1f} pips)\n"
+            f"🎯 *Take Profit:* `{tp_p:.{dec}f}` | 🛑 *Stop Loss:* `{sl_p:.{dec}f}`\n"
+            f"💰 *Position Size:* `{units:,.0f} units` (Max Risk: $100.00)\n"
+            f"{p_emoji} *LIVE UNREALIZED PnL:* *{pnl_str}* ({pct_str})\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        )
+
+    msg += (
+        f"🛡️ *Risk Management:* Automated TP/SL & Timeout Protection Active\n"
+        f"🔄 *Tap 'Refresh' below for real-time spot updates.*"
+    )
+    return msg, inline_kb
+
+
+def format_today_trades_card() -> Tuple[str, Dict[str, Any]]:
+    """Generates today's executed trades report."""
+    now_utc = datetime.now(timezone.utc)
+    today_str = now_utc.strftime("%Y-%m-%d")
+    inline_kb = get_inline_status_markup()
+
+    if not os.path.exists(JOURNAL_CSV_FILE):
+        return "ℹ️ *No trade journal found yet.*", inline_kb
+
+    try:
+        df = pd.read_csv(JOURNAL_CSV_FILE)
+    except Exception as e:
+        return f"[WARN] Failed to read trade journal: {e}", inline_kb
+
+    if df.empty or "date" not in df.columns:
+        return "ℹ️ *No closed trades recorded in journal yet.*", inline_kb
+
+    today_trades = df[df["date"].astype(str) == today_str]
+    if today_trades.empty:
+        msg = (
+            f"📜 *TODAY'S TRADE SUMMARY: {now_utc.strftime('%A, %d-%b-%Y')}*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"ℹ️ *No closed trades executed yet today.*\n\n"
+            f"Bot is monitoring 24/5 live market candles (Monday to Friday).\n"
+            f"Tap *'📊 Live Status & PnL'* to check current active open positions."
+        )
+        return msg, inline_kb
+
+    count = len(today_trades)
+    net_pnl = float(today_trades["net_pnl"].sum())
+    wins = len(today_trades[today_trades["net_pnl"] > 0])
+    losses = len(today_trades[today_trades["net_pnl"] <= 0])
+    p_sign = "+" if net_pnl > 0 else ""
+
+    msg = (
+        f"📜 *TODAY'S TRADE SUMMARY: {now_utc.strftime('%A, %d-%b-%Y')}*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔢 *Total Executed Trades:* {count} ({wins} Wins / {losses} Losses)\n"
+        f"💎 *TODAY'S NET PnL:* *{p_sign}${net_pnl:+,.2f}*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"*Executed Trades Breakdown:*\n"
+    )
+
+    for i, (_, r) in enumerate(today_trades.iterrows(), 1):
+        tr_net = float(r.get("net_pnl", 0.0))
+        tr_sign = "+" if tr_net > 0 else ""
+        tr_emoji = "🟢" if tr_net > 0 else "🔴"
+        pair = str(r.get("pair", ""))
+        side = str(r.get("side", ""))
+        s_name = str(r.get("strategy_name", r.get("strategy", "")))
+        entry_t = str(r.get("entry_time", ""))
+        exit_t = str(r.get("exit_time", ""))
+        reason = str(r.get("exit_reason", ""))
+
+        msg += (
+            f"{tr_emoji} *Trade {i}:* `{pair} {side}` | `{s_name}`\n"
+            f"   • Times: {entry_t} → {exit_t}\n"
+            f"   • Net PnL: *{tr_sign}${tr_net:,.2f}* ({reason})\n"
+        )
+
+    return msg, inline_kb
+
+
+def format_portfolio_summary_card() -> Tuple[str, Dict[str, Any]]:
+    """Generates complete cumulative portfolio balance report."""
+    inline_kb = get_inline_status_markup()
+    if not os.path.exists(JOURNAL_CSV_FILE):
+        return "ℹ️ *No trade journal found yet.*", inline_kb
+
+    try:
+        df = pd.read_csv(JOURNAL_CSV_FILE)
+    except Exception as e:
+        return f"[WARN] Failed to read trade journal: {e}", inline_kb
+
+    tot_trades = len(df)
+    tot_pnl = float(df["net_pnl"].sum()) if not df.empty and "net_pnl" in df.columns else 0.0
+    wins = len(df[df["net_pnl"] > 0]) if not df.empty and "net_pnl" in df.columns else 0
+    losses = len(df[df["net_pnl"] <= 0]) if not df.empty and "net_pnl" in df.columns else 0
+    wr = (wins / tot_trades * 100.0) if tot_trades > 0 else 0.0
+
+    starting_cap = config.INITIAL_CAPITAL
+    current_bal = round(starting_cap + tot_pnl, 2)
+    ret_pct = ((current_bal - starting_cap) / starting_cap) * 100.0
+    pnl_str = f"+${tot_pnl:,.2f}" if tot_pnl >= 0 else f"-${abs(tot_pnl):,.2f}"
+    ret_str = f"+{ret_pct:.2f}%" if ret_pct >= 0 else f"{ret_pct:.2f}%"
+
+    msg = (
+        f"💼 *PORTFOLIO ACCOUNT BALANCE & PERFORMANCE*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏦 *Starting Capital:* USD ${starting_cap:,.2f}\n"
+        f"💎 *Cumulative Net PnL:* *{pnl_str}*\n"
+        f"💰 *CURRENT ACCOUNT BALANCE:* *${current_bal:,.2f}* ({ret_str} Return)\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 *Historical Metrics:*\n"
+        f"   • Total Trades Taken: {tot_trades}\n"
+        f"   • Win Rate: *{wr:.1f}%* ({wins} Wins / {losses} Losses)\n"
+        f"   • Max Trade Risk: *$100.00 strictly enforced (1.0% cap)*\n"
+        f"   • Strategy Count: *8 Quantitative Models Active*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"🤖 *Live Bot Engine:* Active & Synchronized with GitHub Journal"
+    )
+    return msg, inline_kb
+
+
+def format_journal_recent_card() -> Tuple[str, Dict[str, Any]]:
+    """Generates the latest 5 closed trades from the journal."""
+    inline_kb = get_inline_status_markup()
+    if not os.path.exists(JOURNAL_CSV_FILE):
+        return "ℹ️ *No trade journal found yet.*", inline_kb
+
+    try:
+        df = pd.read_csv(JOURNAL_CSV_FILE)
+    except Exception as e:
+        return f"[WARN] Failed to read trade journal: {e}", inline_kb
+
+    if df.empty:
+        return "ℹ️ *No closed trades logged yet in journal.*", inline_kb
+
+    recent = df.tail(5).iloc[::-1]
+    msg = (
+        f"📖 *LATEST 5 CLOSED TRADES (TRADE JOURNAL)*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+    )
+    for _, r in recent.iterrows():
+        net = float(r.get("net_pnl", 0.0))
+        sign = "+" if net > 0 else ""
+        emoji = "🟢" if net > 0 else "🔴"
+        pair = str(r.get("pair", ""))
+        side = str(r.get("side", ""))
+        s_name = str(r.get("strategy_name", r.get("strategy", "")))
+        msg += (
+            f"{emoji} *{r.get('date')}* | `{pair} {side}`\n"
+            f"   • Strategy: `{s_name}`\n"
+            f"   • Times: {r.get('entry_time')} → {r.get('exit_time')}\n"
+            f"   • Net PnL: *{sign}${net:,.2f}* | Reason: `{r.get('exit_reason')}`\n\n"
+        )
+    return msg, inline_kb
+
+
+def format_strategy_specs_card() -> Tuple[str, Dict[str, Any]]:
+    """Generates the strategy rules specification card."""
+    inline_kb = get_inline_status_markup()
+    msg = (
+        "ℹ️ *INSTITUTIONAL STRATEGY SPECIFICATIONS*\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "1️⃣ *London Opening Range Breakout (ORB)*\n"
+        "• *Mechanism:* Tracks 00:00-06:45 UTC Asian range. At London open (07:00 UTC), enters directionally when price breaches Asian High/Low by buffer pips.\n"
+        "• *Pairs:* EUR/USD (5 pip buffer), GBP/USD (12 pip buffer), EUR/JPY (15 pip buffer).\n"
+        "• *Target:* 1.5R to 2.5R.\n\n"
+        "2️⃣ *Institutional Turtle Soup Sweep*\n"
+        "• *Mechanism:* Detects retail stop-loss sweeps beyond rolling 15-40 bar swing extremes. Enters reversal when candle leaves a rejection wick >= 50-60%.\n"
+        "• *Pairs:* USD/CAD (5 pip buffer), EUR/JPY (5 pip buffer).\n"
+        "• *Target:* 2.0R to 2.5R.\n\n"
+        "3️⃣ *Lo-MacKinlay Variance Ratio MR*\n"
+        "• *Mechanism:* Rejects geometric random walk when VR(4) < 0.80 (sub-diffusive mean-reversion). Enters on extreme price excursion Z >= 2.3.\n"
+        "• *Pair:* EUR/USD (1h).\n"
+        "• *Target:* 2.0R.\n"
+        "━━━━━━━━━━━━━━━━━━━━━━\n"
+        "🔒 *Zero Technical Indicators.* Pure session timing, microstructure & statistics."
+    )
+    return msg, inline_kb
+
+
+# =============================================================================
+# TELEGRAM NOTIFIER & CONTROLLER CLASS
+# =============================================================================
 class TelegramNotifier:
     """
-    Manages Telegram bot communication, interactive touch keyboards, and command processing.
+    Manages Telegram communication, interactive touch buttons, and deduplicated trade alerts.
     """
 
     def __init__(self, env_path: str = ".env"):
         self.env_path = env_path
         load_dotenv(env_path, override=True)
-        token_env = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-        self.token = token_env if token_env else "8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4"
-        chat_id_env = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-        self.chat_id = chat_id_env if chat_id_env else "1390044763"
+        self.token = get_telegram_token()
+        self.chat_id = get_or_detect_chat_id()
         self.base_url = f"https://api.telegram.org/bot{self.token}"
         self.last_update_id = self._load_offset()
 
     def _api_call(self, endpoint: str, payload: Optional[Dict[str, Any]] = None, params: Optional[Dict[str, Any]] = None, timeout: int = 12) -> Optional[Dict[str, Any]]:
-        """
-        Executes Telegram Bot API requests directly with automatic retry and backoff.
-        Handles intermittent TLS resets (WinError 10054).
-        """
         url = f"{self.base_url}/{endpoint}"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         for attempt in range(3):
@@ -58,11 +487,10 @@ class TelegramNotifier:
                 else:
                     resp = requests.get(url, params=params, headers=headers, timeout=timeout)
                 return resp.json()
-            except requests.exceptions.RequestException as e:
+            except requests.exceptions.RequestException:
                 if attempt < 2:
                     time.sleep(0.5 * (attempt + 1))
                     continue
-                logger.warning(f"Telegram API network warning for {endpoint}: {e}")
         return None
 
     def _load_offset(self) -> int:
@@ -84,82 +512,213 @@ class TelegramNotifier:
             pass
 
     def get_keyboard_markup(self) -> Dict[str, Any]:
-        """Returns standard persistent touch keyboard."""
-        return {
-            "keyboard": [
-                [{"text": "📊 Active Trades"}, {"text": "📈 Strategy Profits"}],
-                [{"text": "⚡ Check Now"}, {"text": "ℹ️ Strategy Specs"}],
-                [{"text": "📜 Recent History"}, {"text": "❓ Help & Status"}]
-            ],
-            "resize_keyboard": True,
-            "persistent": True
-        }
+        return get_main_keyboard_markup()
 
-    def send_message(self, text: str, parse_mode: Optional[str] = "HTML", reply_markup: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None) -> bool:
-        """
-        Sends a message to the specified chat_id or registered self.chat_id.
-        Includes automatic fallback to plain text if HTML tags fail to parse.
-        """
+    def send_message(self, text: str, parse_mode: Optional[str] = "Markdown", reply_markup: Optional[Dict[str, Any]] = None, chat_id: Optional[str] = None, alert_key: Optional[str] = None, force: bool = False) -> bool:
+        """Sends a message with duplicate protection and markup fallback."""
+        if alert_key and not force:
+            if is_alert_already_sent(alert_key):
+                logger.info(f"Duplicate alert blocked ({alert_key}). Not sending twice.")
+                return True
+
         target_chat = str(chat_id).strip() if chat_id else self.chat_id
         if not target_chat:
-            logger.warning("Telegram Chat ID not set!")
-            return False
+            target_chat = get_or_detect_chat_id()
+            self.chat_id = target_chat
 
         payload = {
             "chat_id": target_chat,
             "text": text,
-            "disable_web_page_preview": True
+            "disable_web_page_preview": True,
+            "reply_markup": reply_markup if reply_markup is not None else get_main_keyboard_markup()
         }
         if parse_mode:
             payload["parse_mode"] = parse_mode
-        if reply_markup is not None:
-            payload["reply_markup"] = reply_markup
-        else:
-            payload["reply_markup"] = self.get_keyboard_markup()
 
         res_json = self._api_call("sendMessage", payload=payload)
+        delivered = False
         if res_json and res_json.get("ok"):
-            return True
-
-        # If HTML parsing failed, retry in plain-text mode
-        err_desc = (res_json or {}).get("description", "")
-        if "can't parse entities" in err_desc or (res_json and not res_json.get("ok")):
-            logger.info(f"Retrying message in plain-text mode (reason: {err_desc})...")
+            delivered = True
+        elif res_json and ("can't parse entities" in str(res_json) or "Bad Request" in str(res_json)):
             payload.pop("parse_mode", None)
             retry_json = self._api_call("sendMessage", payload=payload)
-            return bool(retry_json and retry_json.get("ok"))
+            delivered = bool(retry_json and retry_json.get("ok"))
 
+        if delivered and alert_key:
+            mark_alert_as_sent(alert_key)
+
+        return delivered
+
+    def edit_message(self, chat_id: str, message_id: int, text: str, reply_markup: Optional[Dict[str, Any]] = None) -> bool:
+        """Edits an existing Telegram message in place for smooth interactive button UX."""
+        payload = {
+            "chat_id": chat_id,
+            "message_id": message_id,
+            "text": text,
+            "parse_mode": "Markdown",
+            "reply_markup": reply_markup
+        }
+        res_json = self._api_call("editMessageText", payload=payload)
+        if res_json and res_json.get("ok"):
+            return True
+        elif res_json and "message is not modified" in str(res_json):
+            return True
+        elif res_json and "can't parse entities" in str(res_json):
+            payload.pop("parse_mode", None)
+            retry_json = self._api_call("editMessageText", payload=payload)
+            return bool(retry_json and retry_json.get("ok"))
         return False
 
-    def auto_pair_chat_id(self) -> Optional[str]:
-        """Auto-detects chat_id from getUpdates."""
-        try:
-            data = self._api_call("getUpdates", timeout=10)
-            if data and data.get("ok") and data.get("result"):
-                for update in reversed(data["result"]):
-                    message = update.get("message", {})
-                    chat = message.get("chat", {})
-                    cid = str(chat.get("id", ""))
-                    first_name = chat.get("first_name", "Trader")
-                    username = chat.get("username", "")
+    def answer_callback(self, callback_query_id: str, text: str = "") -> bool:
+        """Dismisses the Telegram loading state for an inline button tap."""
+        if not callback_query_id:
+            return False
+        res = self._api_call("answerCallbackQuery", payload={"callback_query_id": callback_query_id, "text": text})
+        return bool(res and res.get("ok"))
 
-                    if cid:
-                        self.chat_id = cid
-                        self._save_chat_id_to_env(cid)
-                        print(f"[OK] Paired with User: {first_name} (@{username}) | Chat ID: {cid}")
-                        welcome_msg = (
-                            f"🚀 <b>FXFX Institutional Dashboard Connected!</b>\n\n"
-                            f"👤 <b>Trader:</b> {first_name} (@{username})\n"
-                            f"🆔 <b>Chat ID:</b> <code>{cid}</code>\n"
-                            f"📊 <b>Active Strategies:</b> 8 Portfolio Models\n\n"
-                            f"<i>Use the menu buttons below to check live trades, strategy profits, and system status anytime!</i>"
-                        )
-                        self.send_message(welcome_msg, reply_markup=self.get_keyboard_markup(), chat_id=cid)
-                        return cid
-            return None
+    # =========================================================================
+    # INTERACTIVE COMMAND & CALLBACK PROCESSOR
+    # =========================================================================
+    def process_incoming_updates(self, engine_context: Optional[Any] = None):
+        """Polls for button taps or commands and handles them instantly."""
+        try:
+            params = {"timeout": 0}
+            if self.last_update_id > 0:
+                params["offset"] = self.last_update_id + 1
+
+            data = self._api_call("getUpdates", params=params, timeout=10)
+            if not data or not data.get("ok") or not data.get("result"):
+                return
+
+            max_uid = self.last_update_id
+            for update in data["result"]:
+                uid = update.get("update_id", 0)
+                if uid > max_uid:
+                    max_uid = uid
+
+                # 1. Handle Inline Button Callbacks
+                if "callback_query" in update:
+                    cb = update["callback_query"]
+                    cb_id = cb.get("id")
+                    cb_data = str(cb.get("data", "")).strip().lower()
+                    msg = cb.get("message", {})
+                    sender_id = str(cb.get("from", {}).get("id") or msg.get("chat", {}).get("id") or "")
+                    chat_id = str(msg.get("chat", {}).get("id") or self.chat_id)
+                    msg_id = msg.get("message_id")
+
+                    expected_id = str(self.chat_id).strip()
+                    if expected_id and sender_id and sender_id != expected_id:
+                        self.answer_callback(cb_id, text="⚠️ Unauthorized access.")
+                        continue
+
+                    self.answer_callback(cb_id, text="Updating status...")
+
+                    card_text, markup = "", None
+                    if cb_data in ["status", "refresh"]:
+                        card_text, markup = format_live_status_card(engine=engine_context)
+                    elif cb_data == "today":
+                        card_text, markup = format_today_trades_card()
+                    elif cb_data in ["summary", "balance"]:
+                        card_text, markup = format_portfolio_summary_card()
+                    elif cb_data == "journal":
+                        card_text, markup = format_journal_recent_card()
+
+                    if card_text:
+                        edited = False
+                        if msg_id:
+                            edited = self.edit_message(chat_id, msg_id, card_text, reply_markup=markup)
+                        if not edited:
+                            self.send_message(card_text, reply_markup=markup, chat_id=chat_id)
+                    continue
+
+                # 2. Handle Text Messages & Persistent Reply Buttons
+                message = update.get("message") or update.get("edited_message")
+                if message:
+                    sender_id = str(message.get("from", {}).get("id") or message.get("chat", {}).get("id") or "")
+                    chat_id = str(message.get("chat", {}).get("id") or self.chat_id)
+                    text_raw = str(message.get("text", "")).strip()
+
+                    if not text_raw:
+                        continue
+
+                    if not self.chat_id or self.chat_id == "0":
+                        self.chat_id = sender_id
+                        self._save_chat_id_to_env(sender_id)
+
+                    expected_id = str(self.chat_id).strip()
+                    if expected_id and sender_id and sender_id != expected_id:
+                        self.send_message("⚠️ *Access Restricted*\nThis trading bot is restricted to its authorized administrator.", chat_id=chat_id)
+                        continue
+
+                    self.handle_command(text_raw, engine_context, target_chat_id=chat_id)
+
+            if max_uid > self.last_update_id:
+                self._save_offset(max_uid)
+                self._api_call("getUpdates", params={"offset": max_uid + 1, "limit": 1}, timeout=5)
+
         except Exception as e:
-            logger.error(f"Error checking Telegram updates: {e}")
-            return None
+            logger.error(f"Error handling updates: {e}")
+
+    def handle_command(self, cmd: str, engine_context: Optional[Any] = None, target_chat_id: Optional[str] = None):
+        """Routes text commands to formatters."""
+        cmd_clean = cmd.strip()
+        cmd_lower = cmd_clean.lower()
+        cid = target_chat_id or self.chat_id
+
+        if any(cmd_lower.startswith(x) for x in ["/status", "/pnl", "status", "pnl", "📊 live status & pnl", "📊"]):
+            card_text, markup = format_live_status_card(engine=engine_context)
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/today", "today", "📜 today's trades", "📜"]):
+            card_text, markup = format_today_trades_card()
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/summary", "/balance", "summary", "balance", "💼 portfolio balance", "💼"]):
+            card_text, markup = format_portfolio_summary_card()
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/journal", "journal", "📖 trade journal", "📖"]):
+            card_text, markup = format_journal_recent_card()
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/check", "check", "⚡ check now", "⚡"]):
+            self.send_message("⚡ *Evaluating Live Forex Markets...*\nScanning 8 institutional models across EURUSD, GBPUSD, EURJPY, USDCAD.\nPlease stand by...", chat_id=cid)
+            if engine_context and hasattr(engine_context, "run_single_cycle"):
+                engine_context.run_single_cycle(process_updates=False)
+            card_text, markup = format_live_status_card(engine=engine_context)
+            self.send_message(f"✅ *Evaluation Completed!*\n\n{card_text}", reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/specs", "specs", "ℹ️ strategy specs", "ℹ️"]):
+            card_text, markup = format_strategy_specs_card()
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/start", "/help", "/menu", "help", "menu"]):
+            welcome_msg = (
+                f"🤖 *FXFX Institutional Trading Bot Control Panel*\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"Welcome! Use the permanent buttons below or type commands anytime:\n\n"
+                f"• *📊 Live Status & PnL* (`/status`, `/pnl`)\n"
+                f"  Check if a trade is currently running, entry prices, targets, and live floating PnL.\n\n"
+                f"• *📜 Today's Trades* (`/today`)\n"
+                f"  View all trades executed today and daily net return.\n\n"
+                f"• *💼 Portfolio Balance* (`/summary`, `/balance`)\n"
+                f"  View starting capital, cumulative PnL, and current account balance.\n\n"
+                f"• *📖 Trade Journal* (`/journal`)\n"
+                f"  View recent closed trades from the permanent trade ledger.\n\n"
+                f"• *⚡ Check Now* (`/check`)\n"
+                f"  Trigger an immediate scan across all 8 institutional strategies.\n"
+                f"━━━━━━━━━━━━━━━━━━━━━━\n"
+                f"🔔 *All entry and exit alerts are pushed instantly with 0 duplicates!*"
+            )
+            self.send_message(welcome_msg, reply_markup=get_main_keyboard_markup(), chat_id=cid)
+
+        else:
+            self.send_message(
+                f"🤖 Command received: `{cmd_clean}`\n"
+                "Please tap one of the menu buttons below to interact with FXFX.",
+                reply_markup=get_main_keyboard_markup(),
+                chat_id=cid
+            )
 
     def _save_chat_id_to_env(self, chat_id: str):
         try:
@@ -187,331 +746,159 @@ class TelegramNotifier:
             logger.error(f"Could not save chat_id to .env: {e}")
 
     # =========================================================================
-    # INTERACTIVE COMMAND PROCESSOR
+    # TRADE ALERT FORMATTERS (WITH DEDUPLICATION)
     # =========================================================================
-    def process_incoming_updates(self, engine_context: Optional[Any] = None):
-        """
-        Polls for button clicks or text commands from the user and answers them instantly.
-        Acknowledges updates to Telegram servers so they are permanently cleared.
-        """
+    def alert_trade_entry(self, trade: Dict[str, Any], force: bool = False):
+        """Dispatches an instant trade entry alert with duplicate protection."""
+        strat_id = str(trade.get("strategy_id", "strat"))
+        pair = str(trade.get("pair", "PAIR"))
+        entry_t_str = str(trade.get("entry_time_str", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")))
+        date_str = entry_t_str[:10]
+        time_part = entry_t_str[11:16]
+
+        alert_key = f"ENTRY:{date_str}:{strat_id}:{pair}:{time_part}"
+
+        side = trade.get("side", 1)
+        side_icon = "🟢 BUY (LONG)" if side == 1 else "🔴 SELL (SHORT)"
+        s_name = trade.get("strategy_name", "Quant Model")
+        tf = trade.get("timeframe", "15m")
+        entry_p = float(trade.get("entry_price", 0.0))
+        sl_p = float(trade.get("sl", 0.0))
+        tp_p = float(trade.get("tp", 0.0))
+        rr = float(trade.get("rr_ratio", 2.0))
+        dec = 2 if "JPY" in pair else 4
+
+        msg = (
+            f"🚨 *TRADE ENTRY TRIGGERED*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⏰ *Time:* {entry_t_str}\n"
+            f"💱 *Pair:* *{pair}* ({tf})\n"
+            f"📊 *Strategy:* `{s_name}`\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"{side_icon}\n"
+            f"   • Entry Price: *{entry_p:.{dec}f}*\n"
+            f"   • Take Profit: *{tp_p:.{dec}f}*\n"
+            f"   • Stop Loss: *{sl_p:.{dec}f}*\n"
+            f"   • Risk:Reward: *1:{rr:.1f}*\n"
+            f"   • Position Risk: *$100.00 (1.0% cap)*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔒 *Zero-Indicator Microstructure Edge Active*"
+        )
+        self.send_message(msg, alert_key=alert_key, force=force)
+
+    def alert_trade_exit(self, trade: Dict[str, Any], force: bool = False):
+        """Dispatches an instant trade exit alert with duplicate protection."""
+        strat_id = str(trade.get("strategy_id", "strat"))
+        pair = str(trade.get("pair", "PAIR"))
+        reason = str(trade.get("exit_reason", "MANUAL"))
+        exit_t_str = str(trade.get("exit_time_str", datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")))
+        date_str = exit_t_str[:10]
+        time_part = exit_t_str[11:16]
+
+        alert_key = f"EXIT:{date_str}:{strat_id}:{pair}:{reason}:{time_part}"
+
+        pnl = float(trade.get("pnl", 0.0))
+        pnl_pct = float(trade.get("pnl_pct", 0.0))
+        s_name = trade.get("strategy_name", "Quant Model")
+        exit_p = float(trade.get("exit_price", 0.0))
+        bars = int(trade.get("bars_held", 0))
+        dec = 2 if "JPY" in pair else 4
+
+        p_emoji = "🎯" if pnl > 0 else "🛑"
+        p_sign = "+" if pnl > 0 else ""
+
+        msg = (
+            f"{p_emoji} *TRADE EXIT NOTIFICATION*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⏰ *Time:* {exit_t_str}\n"
+            f"💱 *Pair:* *{pair}*\n"
+            f"📊 *Strategy:* `{s_name}`\n"
+            f"📌 *Exit Reason:* `{reason}`\n"
+            f"🚪 *Exit Price:* `{exit_p:.{dec}f}`\n"
+            f"⌛ *Holding Time:* {bars} bars ({bars * 15} mins)\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"💎 *REALIZED NET PnL:* *{p_sign}${pnl:+,.2f}* ({pnl_pct:+.2f}%)\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"📖 *Logged to Trade Journal & Ledger*"
+        )
+        self.send_message(msg, alert_key=alert_key, force=force)
+
+
+# =============================================================================
+# BACKGROUND POLLING DAEMON
+# =============================================================================
+def run_telegram_polling_loop(engine=None, stop_event: Optional[threading.Event] = None):
+    """Continuously listens for incoming button taps and commands."""
+    notifier = TelegramNotifier()
+    token = notifier.token
+    if not token:
+        logger.warning("Telegram Bot Token not configured.")
+        return
+
+    logger.info("Interactive Telegram Bot Listener running (Listening for button clicks & commands)...")
+    url = f"https://api.telegram.org/bot{token}/getUpdates"
+    offset = notifier.last_update_id + 1 if notifier.last_update_id > 0 else None
+
+    while stop_event is None or not stop_event.is_set():
+        params = {"timeout": 10}
+        if offset is not None:
+            params["offset"] = offset
+
         try:
-            params = {"timeout": 0}
-            if self.last_update_id > 0:
-                params["offset"] = self.last_update_id + 1
+            r = requests.get(url, params=params, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+            if r.status_code == 200:
+                data = r.json()
+                if data.get("ok") and data.get("result"):
+                    for update in data["result"]:
+                        offset = update["update_id"] + 1
+                        notifier._save_offset(update["update_id"])
+                        try:
+                            # 1. Inline button callbacks
+                            if "callback_query" in update:
+                                cb = update["callback_query"]
+                                cb_id = cb.get("id")
+                                cb_data = str(cb.get("data", "")).strip().lower()
+                                msg = cb.get("message", {})
+                                chat_id = str(msg.get("chat", {}).get("id") or notifier.chat_id)
+                                msg_id = msg.get("message_id")
 
-            data = self._api_call("getUpdates", params=params, timeout=10)
-            if not data or not data.get("ok") or not data.get("result"):
-                return
+                                notifier.answer_callback(cb_id, text="Updating status...")
+                                card_text, markup = "", None
+                                if cb_data in ["status", "refresh"]:
+                                    card_text, markup = format_live_status_card(engine=engine)
+                                elif cb_data == "today":
+                                    card_text, markup = format_today_trades_card()
+                                elif cb_data in ["summary", "balance"]:
+                                    card_text, markup = format_portfolio_summary_card()
+                                elif cb_data == "journal":
+                                    card_text, markup = format_journal_recent_card()
 
-            max_uid = self.last_update_id
-            for update in data["result"]:
-                uid = update.get("update_id", 0)
-                if uid > max_uid:
-                    max_uid = uid
+                                if card_text:
+                                    edited = False
+                                    if msg_id:
+                                        edited = notifier.edit_message(chat_id, msg_id, card_text, reply_markup=markup)
+                                    if not edited:
+                                        notifier.send_message(card_text, reply_markup=markup, chat_id=chat_id)
 
-                message = update.get("message") or update.get("edited_message")
-                callback = update.get("callback_query")
+                            # 2. Text messages and persistent buttons
+                            elif "message" in update:
+                                m = update["message"]
+                                text_raw = str(m.get("text", "")).strip()
+                                chat_id = str(m.get("chat", {}).get("id") or notifier.chat_id)
+                                if text_raw:
+                                    notifier.handle_command(text_raw, engine_context=engine, target_chat_id=chat_id)
 
-                sender_chat_id = None
-                text = ""
+                        except Exception as u_err:
+                            logger.warning(f"Error handling update: {u_err}")
+            elif r.status_code == 409:
+                time.sleep(5)
+        except Exception:
+            time.sleep(2)
 
-                if callback:
-                    sender_chat_id = str(callback.get("message", {}).get("chat", {}).get("id", ""))
-                    text = callback.get("data", "")
-                elif message:
-                    sender_chat_id = str(message.get("chat", {}).get("id", ""))
-                    text = message.get("text", "").strip()
 
-                if not sender_chat_id:
-                    sender_chat_id = self.chat_id
-
-                if sender_chat_id and (not self.chat_id or self.chat_id == "0"):
-                    self.chat_id = sender_chat_id
-                    self._save_chat_id_to_env(sender_chat_id)
-
-                if not text:
-                    continue
-
-                safe_text = text.encode("ascii", "replace").decode("ascii")
-                logger.info(f"Received Telegram command: '{safe_text}' from Chat ID: {sender_chat_id}")
-                self.handle_command(text, engine_context, target_chat_id=sender_chat_id)
-
-            if max_uid > self.last_update_id:
-                self._save_offset(max_uid)
-                # Acknowledge to Telegram so server purges processed updates from queue
-                self._api_call("getUpdates", params={"offset": max_uid + 1, "limit": 1}, timeout=5)
-
-        except Exception as e:
-            logger.error(f"Error handling updates: {e}")
-
-    def handle_command(self, cmd: str, engine_context: Optional[Any] = None, target_chat_id: Optional[str] = None):
-        """Routes text commands to appropriate handlers, replying directly to sender."""
-        cmd_clean = cmd.strip()
-        cmd_lower = cmd_clean.lower()
-        cid = target_chat_id or self.chat_id
-
-        if cmd_clean in ("/start", "/menu") or "menu" in cmd_lower:
-            msg = (
-                "🎛 <b>FXFX Institutional Control Panel</b>\n\n"
-                "Welcome to your automated algorithmic Forex dashboard.\n"
-                "All 8 strategies are monitored in real time.\n\n"
-                "Select any option below to inspect your portfolio:"
-            )
-            self.send_message(msg, chat_id=cid)
-
-        elif "active trade" in cmd_lower or "active" in cmd_lower:
-            self._reply_active_trades(engine_context, target_chat_id=cid)
-
-        elif "profit" in cmd_lower or "leaderboard" in cmd_lower:
-            self._reply_strategy_profits(target_chat_id=cid)
-
-        elif "check now" in cmd_lower or "check" in cmd_lower:
-            self._reply_check_now(engine_context, target_chat_id=cid)
-
-        elif "spec" in cmd_lower or "rule" in cmd_lower:
-            self._reply_strategy_specs(target_chat_id=cid)
-
-        elif "history" in cmd_lower:
-            self._reply_recent_history(target_chat_id=cid)
-
-        elif "help" in cmd_lower or "status" in cmd_lower:
-            self._reply_help_status(target_chat_id=cid)
-
-        else:
-            self.send_message(
-                f"🤖 Command received: <i>{cmd_clean}</i>\n"
-                "Please tap one of the menu buttons below to interact with FXFX.",
-                reply_markup=self.get_keyboard_markup(),
-                chat_id=cid
-            )
-
-    # -------------------------------------------------------------------------
-    # BUTTON RESPONSE GENERATORS
-    # -------------------------------------------------------------------------
-    def _reply_active_trades(self, engine_context: Optional[Any] = None, target_chat_id: Optional[str] = None):
-        """Builds report on currently active positions."""
-        cid = target_chat_id or self.chat_id
-        active = {}
-        if engine_context and hasattr(engine_context, "active_trades"):
-            active = engine_context.active_trades
-        elif os.path.exists(STATE_FILE):
-            try:
-                with open(STATE_FILE, "r") as f:
-                    active = json.load(f)
-            except Exception:
-                pass
-
-        if not active:
-            msg = (
-                "📊 <b>LIVE ACTIVE TRADES STATUS</b>\n"
-                "────────────────────────\n"
-                "🟢 <b>Current Open Positions:</b> <code>0 Active Trades</code>\n\n"
-                "All 8 institutional models are standing by, scanning for the next session breakout or liquidity sweep:\n"
-                "• EUR/USD (London ORB 15m) — Scanning\n"
-                "• GBP/USD (London ORB 15m) — Scanning\n"
-                "• EUR/JPY (London ORB 15m) — Scanning\n"
-                "• USD/CAD (Turtle Soup 15m) — Scanning\n"
-                "• EUR/JPY (Turtle Soup 15m) — Scanning\n"
-                "• EUR/USD (Variance Ratio 1h) — Scanning\n"
-                "────────────────────────\n"
-                "<i>You will receive an instant notification as soon as an entry executes.</i>"
-            )
-            self.send_message(msg, chat_id=cid)
-            return
-
-        lines = [
-            f"📊 <b>LIVE ACTIVE TRADES ({len(active)} Open)</b>",
-            "────────────────────────"
-        ]
-        for sid, t in active.items():
-            side_str = "🟢 BUY" if t["side"] == 1 else "🔴 SELL"
-            lines.append(
-                f"💱 <b>{t['pair']}</b> | <b>{side_str}</b>\n"
-                f"🎯 <b>Strategy:</b> <code>{t.get('strategy_name', sid)}</code>\n"
-                f"💰 <b>Entry:</b> <code>{t['entry_price']:.5f}</code>\n"
-                f"🛑 <b>Stop Loss:</b> <code>{t['sl']:.5f}</code>\n"
-                f"🎯 <b>Take Profit:</b> <code>{t['tp']:.5f}</code>\n"
-                f"⌛ <b>Bars Held:</b> {t.get('bars_held', 0)} ({t.get('bars_held', 0)*15} mins)\n"
-                f"⏰ <b>Entry Time:</b> {t.get('entry_time_str', 'N/A')}\n"
-                "────────────────────────"
-            )
-        self.send_message("\n".join(lines), chat_id=cid)
-
-    def _reply_strategy_profits(self, target_chat_id: Optional[str] = None):
-        """Displays historical profitability leaderboard for all 8 strategies."""
-        cid = target_chat_id or self.chat_id
-        msg = (
-            "📈 <b>STRATEGY PROFITABILITY LEADERBOARD</b>\n"
-            "<i>(Out-Of-Sample Backtested Performance)</i>\n"
-            "────────────────────────\n"
-            "🥇 <b>Rank 1: London ORB (EURJPY 15m)</b>\n"
-            "• Win Rate: <b>71.43%</b> | Profit Factor: <b>10.39</b>\n"
-            "• Sharpe: <b>3.97</b> | Max DD: <b>0.31%</b>\n\n"
-            "🥈 <b>Rank 2: London ORB (GBPUSD 15m)</b>\n"
-            "• Win Rate: <b>62.50%</b> | Profit Factor: <b>6.61</b>\n"
-            "• Sharpe: <b>4.23</b> | Max DD: <b>0.70%</b>\n\n"
-            "🥉 <b>Rank 3: Turtle Soup Sweep (USDCAD 15m)</b>\n"
-            "• Win Rate: <b>69.23%</b> | Profit Factor: <b>6.34</b>\n"
-            "• Net Profit: <b>+$1,398.64 (+13.99%)</b> | Sharpe: <b>5.45</b>\n\n"
-            "⭐ <b>Rank 4: London ORB (EURUSD 15m)</b>\n"
-            "• Win Rate: <b>76.92%</b> (10W / 3L) | Profit Factor: <b>5.56</b>\n"
-            "• Net Profit: <b>+$1,258.79 (+12.59%)</b> | Sharpe: <b>7.28</b>\n\n"
-            "⭐ <b>Rank 5: Turtle Soup Sweep (EURJPY 15m)</b>\n"
-            "• Win Rate: <b>75.00%</b> | Profit Factor: <b>5.50</b>\n"
-            "• Sharpe: <b>5.83</b> | Max DD: <b>1.04%</b>\n\n"
-            "⭐ <b>Rank 8: Variance Ratio MR (EURUSD 1h)</b>\n"
-            "• Trades: <b>135</b> | Return: <b>+22.66%</b>\n"
-            "• Profit Factor: <b>1.28</b> | Sharpe: <b>0.72</b>\n"
-            "────────────────────────\n"
-            "💎 <b>Overall Portfolio Win Rate:</b> <b>70.8%</b>\n"
-            "🔒 <i>Zero technical indicators — pure microstructure edge.</i>"
-        )
-        self.send_message(msg, chat_id=cid)
-
-    def _reply_check_now(self, engine_context: Optional[Any] = None, target_chat_id: Optional[str] = None):
-        """Runs a live market check and returns price heartbeat."""
-        cid = target_chat_id or self.chat_id
-        now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
-
-        # Send immediate progress response
-        self.send_message(
-            "⚡ <b>Evaluating Live Markets...</b>\n"
-            "Scanning 8 institutional strategies across EURUSD, GBPUSD, EURJPY, USDCAD.\n"
-            "Please stand by for results...",
-            chat_id=cid
-        )
-
-        # Run non-recursive cycle check
-        if engine_context and hasattr(engine_context, "run_single_cycle"):
-            engine_context.run_single_cycle(process_updates=False)
-
-        msg = (
-            f"⚡ <b>PORTFOLIO EVALUATION COMPLETED</b>\n"
-            f"⏰ <b>Scan Time:</b> {now_str}\n"
-            f"────────────────────────\n"
-            f"📡 <b>Live Feeds Status:</b> ONLINE\n"
-            f"• <b>EUR/USD:</b> Monitored (15m &amp; 1h)\n"
-            f"• <b>GBP/USD:</b> Monitored (15m)\n"
-            f"• <b>EUR/JPY:</b> Monitored (15m)\n"
-            f"• <b>USD/CAD:</b> Monitored (15m)\n\n"
-            f"🔍 <b>Market Check:</b> All 8 strategies evaluated.\n"
-            f"No immediate triggers on the latest closed candle.\n"
-            f"────────────────────────\n"
-            f"<i>Next automatic evaluation in 15 minutes.</i>"
-        )
-        self.send_message(msg, chat_id=cid)
-
-    def _reply_strategy_specs(self, target_chat_id: Optional[str] = None):
-        """Displays mechanical rules and parameters with valid HTML entities."""
-        cid = target_chat_id or self.chat_id
-        msg = (
-            "ℹ️ <b>INSTITUTIONAL STRATEGY SPECIFICATIONS</b>\n"
-            "────────────────────────\n"
-            "1️⃣ <b>London Opening Range Breakout (ORB)</b>\n"
-            "• <i>Logic:</i> Tracks 00:00-06:45 UTC Asian range. At London open (07:00 UTC), enters directionally when price breaches Asian High/Low by buffer pips.\n"
-            "• <i>Pairs:</i> EUR/USD (5 pip buffer), GBP/USD (12 pip buffer), EUR/JPY (15 pip buffer).\n"
-            "• <i>Target:</i> 1.5R to 2.5R.\n\n"
-            "2️⃣ <b>Institutional Turtle Soup Sweep</b>\n"
-            "• <i>Logic:</i> Detects retail stop-loss sweeps beyond rolling 15-40 bar swing extremes. Enters reversal when candle leaves a rejection wick &ge; 50-60%.\n"
-            "• <i>Pairs:</i> USD/CAD (5 pip buffer), EUR/JPY (5 pip buffer).\n"
-            "• <i>Target:</i> 2.0R to 2.5R.\n\n"
-            "3️⃣ <b>Lo-MacKinlay Variance Ratio MR</b>\n"
-            "• <i>Logic:</i> Rejects geometric random walk when VR(4) &lt; 0.80 (sub-diffusive mean-reversion). Enters on extreme price excursion Z &ge; 2.3.\n"
-            "• <i>Pair:</i> EUR/USD (1h).\n"
-            "• <i>Target:</i> 2.0R.\n"
-            "────────────────────────\n"
-            "🚫 <b>0 Technical Indicators.</b> Strictly time, geometry &amp; statistics."
-        )
-        self.send_message(msg, chat_id=cid)
-
-    def _reply_recent_history(self, target_chat_id: Optional[str] = None):
-        """Shows summary of recent winning trades from the validation set."""
-        cid = target_chat_id or self.chat_id
-        msg = (
-            "📜 <b>RECENT TRADING AUDIT LOG</b>\n"
-            "────────────────────────\n"
-            "✅ <b>EUR/USD (London ORB):</b> +$124.92 (TP Hit, held 15m)\n"
-            "✅ <b>EUR/USD (London ORB):</b> +$205.31 (TP Hit, held 3.2h)\n"
-            "✅ <b>USD/CAD (Turtle Soup):</b> +$207.94 (TP Hit, held 1.2h)\n"
-            "✅ <b>USD/CAD (Turtle Soup):</b> +$140.88 (Timeout Profit, held 7h)\n"
-            "✅ <b>EUR/JPY (London ORB):</b> +$144.59 (TP Hit, held 3.2h)\n"
-            "❌ <b>EUR/USD (London ORB):</b> -$117.91 (SL Hit)\n"
-            "────────────────────────\n"
-            "📊 <b>Recent Batch Net:</b> <b>+$705.73</b>\n"
-            "🎯 <b>Batch Win Rate:</b> <b>83.3%</b> (5 Wins / 1 Loss)"
-        )
-        self.send_message(msg, chat_id=cid)
-
-    def _reply_help_status(self, target_chat_id: Optional[str] = None):
-        """System health and market schedule."""
-        cid = target_chat_id or self.chat_id
-        now = datetime.now(timezone.utc)
-        is_weekend = (now.weekday() == 5) or (now.weekday() == 6 and now.hour < 21) or (now.weekday() == 4 and now.hour >= 22)
-        mkt_status = "🔴 CLOSED (Weekend)" if is_weekend else "🟢 OPEN (Active 24/5)"
-
-        msg = (
-            "❓ <b>SYSTEM HEALTH &amp; MARKET STATUS</b>\n"
-            "────────────────────────\n"
-            f"🌐 <b>Forex Market:</b> {mkt_status}\n"
-            f"⏰ <b>UTC Time:</b> <code>{now.strftime('%Y-%m-%d %H:%M:%S')}</code>\n"
-            f"🤖 <b>Bot Engine:</b> FXFX v2.0 (Online)\n"
-            f"🔄 <b>Actions Schedule:</b> Every 15 mins (*/15 * * * 1-5)\n"
-            f"🛡️ <b>Frictional Modeling:</b> Spreads &amp; Slippage Deducted\n"
-            f"📱 <b>Telegram Pairing:</b> Active (Chat ID: <code>{cid}</code>)\n"
-            "────────────────────────\n"
-            "Tap any button below to refresh data."
-        )
-        self.send_message(msg, chat_id=cid)
-
-    # =========================================================================
-    # TRADE ALERT FORMATTERS
-    # =========================================================================
-    def alert_trade_entry(self, trade: Dict[str, Any]):
-        side_icon = "🟢 BUY (LONG)" if trade["side"] == 1 else "🔴 SELL (SHORT)"
-        msg = (
-            f"⚡ <b>FXFX NEW TRADE EXECUTED</b>\n"
-            f"────────────────────────\n"
-            f"🎯 <b>Strategy:</b> <code>{trade.get('strategy_name', 'Quant Model')}</code>\n"
-            f"💱 <b>Pair:</b> <b>{trade['pair']}</b> ({trade.get('timeframe', '15m')})\n"
-            f"📊 <b>Direction:</b> {side_icon}\n"
-            f"💰 <b>Entry Price:</b> <code>{trade['entry_price']:.5f}</code>\n"
-            f"🛑 <b>Stop Loss:</b> <code>{trade['sl']:.5f}</code>\n"
-            f"🎯 <b>Take Profit:</b> <code>{trade['tp']:.5f}</code>\n"
-            f"⚖️ <b>Risk:Reward:</b> <code>1:{trade.get('rr_ratio', 2.0):.1f}</code>\n"
-            f"⏰ <b>Fill Time (UTC):</b> {trade.get('entry_time_str', 'Now')}\n"
-            f"────────────────────────\n"
-            f"🔒 <i>Zero-Indicator Microstructure Edge Active</i>"
-        )
-        self.send_message(msg)
-
-    def alert_trade_exit(self, trade: Dict[str, Any]):
-        pnl = trade.get("pnl", 0.0)
-        pnl_pct = trade.get("pnl_pct", 0.0)
-        reason = trade.get("exit_reason", "MANUAL")
-
-        if reason == "TP":
-            header = "🎯 <b>TAKE PROFIT HIT (+WIN)</b>"
-            pnl_str = f"<b>+${pnl:.2f} (+{pnl_pct:.2f}%)</b>"
-            icon = "✅"
-        elif reason == "SL":
-            header = "🛑 <b>STOP LOSS TRIGGERED (-LOSS)</b>"
-            pnl_str = f"<b>-${abs(pnl):.2f} ({pnl_pct:.2f}%)</b>"
-            icon = "❌"
-        else:
-            header = "⏱️ <b>SESSION TIMEOUT EXIT</b>"
-            sign = "+" if pnl >= 0 else "-"
-            pnl_str = f"<b>{sign}${abs(pnl):.2f}</b>"
-            icon = "⏳"
-
-        msg = (
-            f"{header}\n"
-            f"────────────────────────\n"
-            f"💱 <b>Pair:</b> <b>{trade['pair']}</b>\n"
-            f"🎯 <b>Strategy:</b> <code>{trade.get('strategy_name', 'Quant Model')}</code>\n"
-            f"🚪 <b>Exit Price:</b> <code>{trade['exit_price']:.5f}</code>\n"
-            f"{icon} <b>Realized PnL:</b> {pnl_str}\n"
-            f"⌛ <b>Holding Time:</b> {trade.get('bars_held', 0)} bars\n"
-            f"⏰ <b>Exit Time (UTC):</b> {trade.get('exit_time_str', 'Now')}\n"
-            f"────────────────────────"
-        )
-        self.send_message(msg)
+def start_interactive_bot_daemon(engine=None) -> Tuple[threading.Thread, threading.Event]:
+    """Starts the interactive bot listener in a background daemon thread."""
+    stop_event = threading.Event()
+    thread = threading.Thread(target=run_telegram_polling_loop, kwargs={"engine": engine, "stop_event": stop_event}, daemon=True)
+    thread.start()
+    return thread, stop_event
