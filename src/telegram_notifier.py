@@ -232,7 +232,8 @@ class TelegramNotifier:
                 if not text:
                     continue
 
-                logger.info(f"Received Telegram command: '{text}' from Chat ID: {sender_chat_id}")
+                safe_text = text.encode("ascii", "replace").decode("ascii")
+                logger.info(f"Received Telegram command: '{safe_text}' from Chat ID: {sender_chat_id}")
                 self.handle_command(text, engine_context, target_chat_id=sender_chat_id)
 
             if max_uid > self.last_update_id:
