@@ -1,13 +1,14 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-15 12:31:27 UTC*
+*Last Updated: 2026-10-15 12:46:06 UTC*
 
 ---
 
 ## 🟢 Live Active Open Positions (In-Flight)
 
-> ℹ️ **No active open positions currently in-flight.**  
-> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m & 1h market candles across all 8 quantitative models.*  
+| Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Rank 3: Turtle Soup Sweep (USDCAD 15m)** | `USDCAD` | 🔴 SELL | 2026-10-15 12:46:06 UTC | `1.42037` | `1.41636` | `1.42242` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
