@@ -1,18 +1,18 @@
 {
-  "strat_3_usdcad_turtle": {
-    "strategy_id": "strat_3_usdcad_turtle",
-    "strategy_name": "Rank 3: Turtle Soup Sweep (USDCAD 15m)",
-    "pair": "USDCAD",
+  "strat_4_eurusd_orb": {
+    "strategy_id": "strat_4_eurusd_orb",
+    "strategy_name": "Rank 4: London ORB (EURUSD 15m)",
+    "pair": "EURUSD",
     "timeframe": "15m",
-    "side": -1,
-    "entry_price": 1.4203650506210328,
-    "sl": 1.42241999168396,
-    "tp": 1.4163600870132447,
-    "units": 48663.19613933647,
+    "side": 1,
+    "entry_price": 1.1247678519821167,
+    "sl": 1.1239535280227662,
+    "tp": 1.1265345412254333,
+    "units": 122801.24986099314,
     "risk_usd": 100.0,
-    "rr_ratio": 2.0,
-    "max_bars": 28,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
     "bars_held": 0,
-    "entry_time_str": "2026-10-15 12:46:06 UTC"
+    "entry_time_str": "2026-10-16 07:31:38 UTC"
   }
 }
