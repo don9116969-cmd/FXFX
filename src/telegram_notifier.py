@@ -1059,6 +1059,16 @@ def run_telegram_polling_loop(engine=None, stop_event: Optional[threading.Event]
                                     card_text, markup = format_live_status_card(engine=engine)
                                 elif cb_data == "today":
                                     card_text, markup = format_today_trades_card()
+                                elif cb_data in ["summary", "balance"]:
+                                    card_text, markup = format_portfolio_summary_card()
+                                elif cb_data in ["calculator", "calc", "projection", "projections"] or cb_data.startswith("calc_"):
+                                    cap = None
+                                    if cb_data.startswith("calc_"):
+                                        try:
+                                            cap = float(cb_data.split("calc_")[-1])
+                                        except Exception:
+                                            cap = None
+                                    card_text, markup = format_earnings_calculator_card(capital=cap)
                                 elif cb_data.startswith("journal"):
                                     page = 1
                                     if "page_" in cb_data:
