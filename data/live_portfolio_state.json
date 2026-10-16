@@ -14,5 +14,21 @@
     "max_bars": 32,
     "bars_held": 0,
     "entry_time_str": "2026-10-16 07:31:38 UTC"
+  },
+  "strat_6_eurusd_orb_tight": {
+    "strategy_id": "strat_6_eurusd_orb_tight",
+    "strategy_name": "Rank 6: London ORB Tight (EURUSD 15m)",
+    "pair": "EURUSD",
+    "timeframe": "15m",
+    "side": 1,
+    "entry_price": 1.1247678519821167,
+    "sl": 1.1239535280227662,
+    "tp": 1.1265345412254333,
+    "units": 122801.24986099314,
+    "risk_usd": 100.0,
+    "rr_ratio": 1.5,
+    "max_bars": 32,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-16 07:31:40 UTC"
   }
 }
