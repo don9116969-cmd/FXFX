@@ -978,9 +978,9 @@ class TelegramNotifier:
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
             f"🔒 *Zero-Indicator Microstructure Edge Active*"
         )
-        self.send_message(msg, alert_key=alert_key, force=force)
+        return self.send_message(msg, alert_key=alert_key, force=force)
 
-    def alert_trade_exit(self, trade: Dict[str, Any], force: bool = False):
+    def alert_trade_exit(self, trade: Dict[str, Any], force: bool = False) -> bool:
         """Dispatches an instant trade exit alert with duplicate protection."""
         strat_id = str(trade.get("strategy_id", "strat"))
         pair = str(trade.get("pair", "PAIR"))
@@ -1015,7 +1015,7 @@ class TelegramNotifier:
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
             f"📖 *Logged to Trade Journal & Ledger*"
         )
-        self.send_message(msg, alert_key=alert_key, force=force)
+        return self.send_message(msg, alert_key=alert_key, force=force)
 
 
 # =============================================================================
