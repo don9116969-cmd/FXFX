@@ -10,6 +10,6 @@ from src.telegram_notifier import run_telegram_polling_loop
 if __name__ == "__main__":
     print("=" * 75)
     print("   FXFX INSTITUTIONAL FOREX BOT - INTERACTIVE TELEGRAM CONTROLLER")
-    print("   Available Commands & Buttons: /status, /pnl, /today, /summary, /journal, /check")
+    print("   Available Commands & Buttons: /status, /pnl, /today, /summary, /journal, /calculate, /check")
     print("=" * 75)
     run_telegram_polling_loop()
