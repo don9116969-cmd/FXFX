@@ -383,7 +383,10 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     risk_env = os.getenv("RISK_PER_TRADE_USD", "").strip()
-    risk_val = float(risk_env) if risk_env else 100.0
+    try:
+        risk_val = float(risk_env) if risk_env and risk_env.lower() not in ("true", "false", "none", "null") else 100.0
+    except Exception:
+        risk_val = 100.0
     engine = LivePortfolioEngine(risk_per_trade_usd=risk_val)
 
     if args.once:

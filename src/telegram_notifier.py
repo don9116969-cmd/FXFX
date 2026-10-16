@@ -39,9 +39,15 @@ SENT_ALERTS_FILE = config.SENT_ALERTS_FILE
 OFFSET_FILE = config.OFFSET_FILE
 
 
+DEFAULT_BOT_TOKEN = "8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4"
+DEFAULT_CHAT_ID = "1390044763"
+
+
 def get_telegram_token() -> str:
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
-    return token if token else "8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4"
+    if not token or token.lower() in ("true", "false", "none", "null") or ":" not in token:
+        return DEFAULT_BOT_TOKEN
+    return token
 
 
 def get_or_detect_chat_id() -> str:
@@ -50,12 +56,12 @@ def get_or_detect_chat_id() -> str:
     If empty, queries getUpdates to automatically detect and store the user's Chat ID.
     """
     chat_id = os.getenv("TELEGRAM_CHAT_ID", "").strip()
-    if chat_id and chat_id != "0":
+    if chat_id and chat_id.lower() not in ("true", "false", "none", "null", "0") and any(c.isdigit() for c in chat_id):
         return chat_id
 
     token = get_telegram_token()
     if not token:
-        return "1390044763"
+        return DEFAULT_CHAT_ID
 
     url = f"https://api.telegram.org/bot{token}/getUpdates"
     try:
@@ -71,7 +77,7 @@ def get_or_detect_chat_id() -> str:
     except Exception as e:
         logger.warning(f"Failed to auto-detect Telegram Chat ID: {e}")
 
-    return "1390044763"
+    return DEFAULT_CHAT_ID
 
 
 # =============================================================================
@@ -647,11 +653,18 @@ class TelegramNotifier:
                     resp = requests.post(url, json=payload, headers=headers, timeout=timeout)
                 else:
                     resp = requests.get(url, params=params, headers=headers, timeout=timeout)
-                return resp.json()
-            except requests.exceptions.RequestException:
+                data = resp.json()
+                if not data.get("ok"):
+                    logger.warning(f"Telegram API {endpoint} non-OK response (HTTP {resp.status_code}): {data}")
+                return data
+            except requests.exceptions.RequestException as e:
+                logger.warning(f"Telegram API {endpoint} connection error (attempt {attempt+1}/3): {e}")
                 if attempt < 2:
                     time.sleep(0.5 * (attempt + 1))
                     continue
+            except Exception as e:
+                logger.error(f"Telegram API {endpoint} parse error: {e}")
+                break
         return None
 
     def _load_offset(self) -> int:
@@ -705,6 +718,8 @@ class TelegramNotifier:
             retry_json = self._api_call("sendMessage", payload=payload)
             delivered = bool(retry_json and retry_json.get("ok"))
 
+        logger.info(f"Telegram sendMessage to chat {target_chat}: {'DELIVERED' if delivered else 'FAILED'}")
+
         if delivered and alert_key:
             mark_alert_as_sent(alert_key)
 
@@ -756,6 +771,8 @@ class TelegramNotifier:
                 if not updates:
                     break
 
+                logger.info(f"Processing {len(updates)} pending Telegram updates from queue...")
+
                 max_uid = self.last_update_id
                 for update in updates:
                     uid = update.get("update_id", 0)
@@ -774,9 +791,11 @@ class TelegramNotifier:
 
                         expected_id = str(self.chat_id).strip()
                         if expected_id and sender_id and sender_id != expected_id:
+                            logger.warning(f"Unauthorized callback query from {sender_id} (expected {expected_id})")
                             self.answer_callback(cb_id, text="⚠️ Unauthorized access.")
                             continue
 
+                        logger.info(f"Processing inline callback '{cb_data}' from {sender_id}")
                         self.answer_callback(cb_id, text="Updating status...")
 
                         card_text, markup = "", None
@@ -829,9 +848,11 @@ class TelegramNotifier:
 
                         expected_id = str(self.chat_id).strip()
                         if expected_id and sender_id and sender_id != expected_id:
+                            logger.warning(f"Unauthorized message from {sender_id} (expected {expected_id})")
                             self.send_message("⚠️ *Access Restricted*\nThis trading bot is restricted to its authorized administrator.", chat_id=chat_id)
                             continue
 
+                        logger.info(f"Processing Telegram user message '{text_raw}' from chat {chat_id}")
                         self.handle_command(text_raw, engine_context, target_chat_id=chat_id)
 
                 if max_uid > self.last_update_id:
@@ -847,6 +868,7 @@ class TelegramNotifier:
         cmd_clean = cmd.strip()
         cmd_lower = cmd_clean.lower()
         cid = target_chat_id or self.chat_id
+        logger.info(f"Routing bot command: '{cmd_clean}' for target chat {cid}")
 
         if any(cmd_lower.startswith(x) for x in ["/status", "/pnl", "status", "pnl", "📊 live status & pnl", "📊"]):
             card_text, markup = format_live_status_card(engine=engine_context)

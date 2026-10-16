@@ -38,16 +38,16 @@ jobs:
 
       - name: Run Live Engine Evaluation
         env:
-          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN || '8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4' }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '1390044763' }}
-          RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD || '100.0' }}
-          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE || '10000.0' }}
-          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'true' }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD }}
+          ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
+          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "FXFX Bot Cloud Runner"
           git config --global user.email "bot@github-actions.internal"
-          python -u src/live_engine.py --once
+          python -u src/live_engine.py --once --notify
 
       - name: Commit and Push Journal & State Updates
         if: always()
