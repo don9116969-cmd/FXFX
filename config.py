@@ -62,23 +62,47 @@ class TradingConfig:
     SENT_ALERTS_FILE: str = os.path.join(DATA_DIR, "sent_alerts.json")
     OFFSET_FILE: str = os.path.join(DATA_DIR, "telegram_offset.txt")
 
-    # Strategy Portfolio Definitions (The 8 Out-Of-Sample Quant Models)
+    # Strategy Portfolio Definitions (100% 15-Minute Champion Quantitative Models)
     PORTFOLIO_STRATEGIES: List[Dict[str, Any]] = field(default_factory=lambda: [
         {
-            "id": "strat_1_eurjpy_orb",
-            "name": "Rank 1: London ORB (EURJPY 15m)",
+            "id": "strat_1_eurusd_orb",
+            "name": "Rank 1: London ORB (EURUSD 15m)",
+            "pair": "EURUSD",
+            "ticker": "EURUSD=X",
+            "timeframe": "15m",
+            "period": "10d",
+            "dec": 4,
+            "spread_pips": 0.7,
+            "type": "ORB",
+            "params": {"buffer_pips": 2.0, "rr_ratio": 2.0, "sl_at_mid": False, "max_bars": 36}
+        },
+        {
+            "id": "strat_2_eurjpy_turtle",
+            "name": "Rank 2: Turtle Soup Sweep (EURJPY 15m)",
             "pair": "EURJPY",
             "ticker": "EURJPY=X",
             "timeframe": "15m",
             "period": "10d",
             "dec": 2,
             "spread_pips": 1.2,
-            "type": "ORB",
-            "params": {"buffer_pips": 15.0, "rr_ratio": 1.5, "sl_at_mid": True, "max_bars": 32}
+            "type": "TURTLE",
+            "params": {"swing_lookback": 30, "buffer_pips": 2.0, "wick_ratio": 0.6, "rr_ratio": 2.0, "max_bars": 36}
         },
         {
-            "id": "strat_2_gbpusd_orb",
-            "name": "Rank 2: London ORB (GBPUSD 15m)",
+            "id": "strat_3_gbpjpy_turtle",
+            "name": "Rank 3: Turtle Soup Sweep (GBPJPY 15m)",
+            "pair": "GBPJPY",
+            "ticker": "GBPJPY=X",
+            "timeframe": "15m",
+            "period": "10d",
+            "dec": 2,
+            "spread_pips": 1.6,
+            "type": "TURTLE",
+            "params": {"swing_lookback": 40, "buffer_pips": 2.0, "wick_ratio": 0.5, "rr_ratio": 2.0, "max_bars": 20}
+        },
+        {
+            "id": "strat_4_gbpusd_orb",
+            "name": "Rank 4: London ORB (GBPUSD 15m)",
             "pair": "GBPUSD",
             "ticker": "GBPUSD=X",
             "timeframe": "15m",
@@ -86,11 +110,23 @@ class TradingConfig:
             "dec": 4,
             "spread_pips": 1.0,
             "type": "ORB",
-            "params": {"buffer_pips": 12.0, "rr_ratio": 2.0, "sl_at_mid": True, "max_bars": 32}
+            "params": {"buffer_pips": 5.0, "rr_ratio": 3.0, "sl_at_mid": True, "max_bars": 36}
         },
         {
-            "id": "strat_3_usdcad_turtle",
-            "name": "Rank 3: Turtle Soup Sweep (USDCAD 15m)",
+            "id": "strat_5_audusd_turtle",
+            "name": "Rank 5: Turtle Soup Sweep (AUDUSD 15m)",
+            "pair": "AUDUSD",
+            "ticker": "AUDUSD=X",
+            "timeframe": "15m",
+            "period": "10d",
+            "dec": 4,
+            "spread_pips": 0.9,
+            "type": "TURTLE",
+            "params": {"swing_lookback": 12, "buffer_pips": 2.0, "wick_ratio": 0.4, "rr_ratio": 2.5, "max_bars": 20}
+        },
+        {
+            "id": "strat_6_usdcad_turtle",
+            "name": "Rank 6: Turtle Soup Sweep (USDCAD 15m)",
             "pair": "USDCAD",
             "ticker": "USDCAD=X",
             "timeframe": "15m",
@@ -98,67 +134,31 @@ class TradingConfig:
             "dec": 4,
             "spread_pips": 1.1,
             "type": "TURTLE",
-            "params": {"swing_lookback": 15, "buffer_pips": 5.0, "wick_ratio": 0.4, "rr_ratio": 2.0, "max_bars": 28}
+            "params": {"swing_lookback": 12, "buffer_pips": 5.0, "wick_ratio": 0.6, "rr_ratio": 2.0, "max_bars": 36}
         },
         {
-            "id": "strat_4_eurusd_orb",
-            "name": "Rank 4: London ORB (EURUSD 15m)",
-            "pair": "EURUSD",
-            "ticker": "EURUSD=X",
+            "id": "strat_7_audusd_orb",
+            "name": "Rank 7: London ORB (AUDUSD 15m)",
+            "pair": "AUDUSD",
+            "ticker": "AUDUSD=X",
             "timeframe": "15m",
             "period": "10d",
             "dec": 4,
-            "spread_pips": 0.7,
+            "spread_pips": 0.9,
             "type": "ORB",
-            "params": {"buffer_pips": 5.0, "rr_ratio": 1.5, "sl_at_mid": False, "max_bars": 32}
+            "params": {"buffer_pips": 2.0, "rr_ratio": 1.5, "sl_at_mid": True, "max_bars": 28}
         },
         {
-            "id": "strat_5_eurjpy_turtle",
-            "name": "Rank 5: Turtle Soup Sweep (EURJPY 15m)",
-            "pair": "EURJPY",
-            "ticker": "EURJPY=X",
+            "id": "strat_8_usdjpy_orb",
+            "name": "Rank 8: London ORB (USDJPY 15m)",
+            "pair": "USDJPY",
+            "ticker": "USDJPY=X",
             "timeframe": "15m",
             "period": "10d",
             "dec": 2,
-            "spread_pips": 1.2,
-            "type": "TURTLE",
-            "params": {"swing_lookback": 40, "buffer_pips": 5.0, "wick_ratio": 0.6, "rr_ratio": 2.0, "max_bars": 28}
-        },
-        {
-            "id": "strat_6_eurusd_orb_tight",
-            "name": "Rank 6: London ORB Tight (EURUSD 15m)",
-            "pair": "EURUSD",
-            "ticker": "EURUSD=X",
-            "timeframe": "15m",
-            "period": "10d",
-            "dec": 4,
-            "spread_pips": 0.7,
+            "spread_pips": 1.0,
             "type": "ORB",
-            "params": {"buffer_pips": 3.0, "rr_ratio": 1.5, "sl_at_mid": False, "max_bars": 32}
-        },
-        {
-            "id": "strat_7_usdcad_turtle_tight",
-            "name": "Rank 7: Turtle Soup Tight (USDCAD 15m)",
-            "pair": "USDCAD",
-            "ticker": "USDCAD=X",
-            "timeframe": "15m",
-            "period": "10d",
-            "dec": 4,
-            "spread_pips": 1.1,
-            "type": "TURTLE",
-            "params": {"swing_lookback": 25, "buffer_pips": 3.0, "wick_ratio": 0.6, "rr_ratio": 2.0, "max_bars": 28}
-        },
-        {
-            "id": "strat_8_eurusd_variance_ratio",
-            "name": "Rank 8: Variance Ratio MR (EURUSD 1h)",
-            "pair": "EURUSD",
-            "ticker": "EURUSD=X",
-            "timeframe": "1h",
-            "period": "60d",
-            "dec": 4,
-            "spread_pips": 0.7,
-            "type": "VARIANCE_RATIO",
-            "params": {"lookback_n": 40, "q_period": 4, "vr_threshold": 0.80, "z_entry": 2.3, "rr_ratio": 2.0, "max_holding_bars": 24}
+            "params": {"buffer_pips": 12.0, "rr_ratio": 2.0, "sl_at_mid": True, "max_bars": 36}
         }
     ])
 

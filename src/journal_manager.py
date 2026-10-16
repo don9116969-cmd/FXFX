@@ -157,7 +157,7 @@ def refresh_markdown_journal(active_trades: Optional[Dict[str, Any]] = None):
         try:
             df_j = pd.read_csv(JOURNAL_CSV)
             if not df_j.empty and "date" in df_j.columns and "entry_time" in df_j.columns:
-                df_j.sort_values(by=["date", "entry_time"], inplace=True)
+                df_j.sort_values(by=["date", "entry_time"], ascending=[False, False], inplace=True)
         except Exception:
             df_j = pd.DataFrame()
 
@@ -177,7 +177,7 @@ def refresh_markdown_journal(active_trades: Optional[Dict[str, Any]] = None):
             f.write("\n")
         else:
             f.write("> ℹ️ **No active open positions currently in-flight.**  \n")
-            f.write("> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m & 1h market candles across all 8 quantitative models.*  \n\n")
+            f.write("> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m market candles across all 8 quantitative models.*  \n\n")
 
         f.write("---\n\n")
 
