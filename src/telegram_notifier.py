@@ -740,101 +740,107 @@ class TelegramNotifier:
     # =========================================================================
     # INTERACTIVE COMMAND & CALLBACK PROCESSOR
     # =========================================================================
-    def process_incoming_updates(self, engine_context: Optional[Any] = None):
-        """Polls for button taps or commands and handles them instantly."""
-        try:
-            params = {"timeout": 0}
-            if self.last_update_id > 0:
-                params["offset"] = self.last_update_id + 1
+    def process_incoming_updates(self, engine_context: Optional[Any] = None, max_drains: int = 5):
+        """Polls for button taps or commands and handles them instantly, draining all pending items."""
+        for _ in range(max_drains):
+            try:
+                params = {"timeout": 0}
+                if self.last_update_id > 0:
+                    params["offset"] = self.last_update_id + 1
 
-            data = self._api_call("getUpdates", params=params, timeout=10)
-            if not data or not data.get("ok") or not data.get("result"):
-                return
+                data = self._api_call("getUpdates", params=params, timeout=10)
+                if not data or not data.get("ok") or not data.get("result"):
+                    break
 
-            max_uid = self.last_update_id
-            for update in data["result"]:
-                uid = update.get("update_id", 0)
-                if uid > max_uid:
-                    max_uid = uid
+                updates = data["result"]
+                if not updates:
+                    break
 
-                # 1. Handle Inline Button Callbacks
-                if "callback_query" in update:
-                    cb = update["callback_query"]
-                    cb_id = cb.get("id")
-                    cb_data = str(cb.get("data", "")).strip().lower()
-                    msg = cb.get("message", {})
-                    sender_id = str(cb.get("from", {}).get("id") or msg.get("chat", {}).get("id") or "")
-                    chat_id = str(msg.get("chat", {}).get("id") or self.chat_id)
-                    msg_id = msg.get("message_id")
+                max_uid = self.last_update_id
+                for update in updates:
+                    uid = update.get("update_id", 0)
+                    if uid > max_uid:
+                        max_uid = uid
 
-                    expected_id = str(self.chat_id).strip()
-                    if expected_id and sender_id and sender_id != expected_id:
-                        self.answer_callback(cb_id, text="⚠️ Unauthorized access.")
+                    # 1. Handle Inline Button Callbacks
+                    if "callback_query" in update:
+                        cb = update["callback_query"]
+                        cb_id = cb.get("id")
+                        cb_data = str(cb.get("data", "")).strip().lower()
+                        msg = cb.get("message", {})
+                        sender_id = str(cb.get("from", {}).get("id") or msg.get("chat", {}).get("id") or "")
+                        chat_id = str(msg.get("chat", {}).get("id") or self.chat_id)
+                        msg_id = msg.get("message_id")
+
+                        expected_id = str(self.chat_id).strip()
+                        if expected_id and sender_id and sender_id != expected_id:
+                            self.answer_callback(cb_id, text="⚠️ Unauthorized access.")
+                            continue
+
+                        self.answer_callback(cb_id, text="Updating status...")
+
+                        card_text, markup = "", None
+                        if cb_data in ["status", "refresh"]:
+                            card_text, markup = format_live_status_card(engine=engine_context)
+                        elif cb_data == "today":
+                            card_text, markup = format_today_trades_card()
+                        elif cb_data in ["summary", "balance"]:
+                            card_text, markup = format_portfolio_summary_card()
+                        elif cb_data in ["calculator", "calc", "projection", "projections"] or cb_data.startswith("calc_"):
+                            cap = None
+                            if cb_data.startswith("calc_"):
+                                try:
+                                    cap = float(cb_data.split("calc_")[-1])
+                                except Exception:
+                                    cap = None
+                            card_text, markup = format_earnings_calculator_card(capital=cap)
+                        elif cb_data.startswith("journal"):
+                            page = 1
+                            if "page_" in cb_data:
+                                try:
+                                    page = int(cb_data.split("page_")[-1])
+                                except Exception:
+                                    page = 1
+                            card_text, markup = format_journal_page_card(page=page)
+                        elif cb_data == "noop":
+                            continue
+
+                        if card_text:
+                            edited = False
+                            if msg_id:
+                                edited = self.edit_message(chat_id, msg_id, card_text, reply_markup=markup)
+                            if not edited:
+                                self.send_message(card_text, reply_markup=markup, chat_id=chat_id)
                         continue
 
-                    self.answer_callback(cb_id, text="Updating status...")
+                    # 2. Handle Text Messages & Persistent Reply Buttons
+                    message = update.get("message") or update.get("edited_message")
+                    if message:
+                        sender_id = str(message.get("from", {}).get("id") or message.get("chat", {}).get("id") or "")
+                        chat_id = str(message.get("chat", {}).get("id") or self.chat_id)
+                        text_raw = str(message.get("text", "")).strip()
 
-                    card_text, markup = "", None
-                    if cb_data in ["status", "refresh"]:
-                        card_text, markup = format_live_status_card(engine=engine_context)
-                    elif cb_data == "today":
-                        card_text, markup = format_today_trades_card()
-                    elif cb_data in ["summary", "balance"]:
-                        card_text, markup = format_portfolio_summary_card()
-                    elif cb_data in ["calculator", "calc", "projection", "projections"] or cb_data.startswith("calc_"):
-                        cap = None
-                        if cb_data.startswith("calc_"):
-                            try:
-                                cap = float(cb_data.split("calc_")[-1])
-                            except Exception:
-                                cap = None
-                        card_text, markup = format_earnings_calculator_card(capital=cap)
-                    elif cb_data.startswith("journal"):
-                        page = 1
-                        if "page_" in cb_data:
-                            try:
-                                page = int(cb_data.split("page_")[-1])
-                            except Exception:
-                                page = 1
-                        card_text, markup = format_journal_page_card(page=page)
-                    elif cb_data == "noop":
-                        continue
+                        if not text_raw:
+                            continue
 
-                    if card_text:
-                        edited = False
-                        if msg_id:
-                            edited = self.edit_message(chat_id, msg_id, card_text, reply_markup=markup)
-                        if not edited:
-                            self.send_message(card_text, reply_markup=markup, chat_id=chat_id)
-                    continue
+                        if not self.chat_id or self.chat_id == "0":
+                            self.chat_id = sender_id
+                            self._save_chat_id_to_env(sender_id)
 
-                # 2. Handle Text Messages & Persistent Reply Buttons
-                message = update.get("message") or update.get("edited_message")
-                if message:
-                    sender_id = str(message.get("from", {}).get("id") or message.get("chat", {}).get("id") or "")
-                    chat_id = str(message.get("chat", {}).get("id") or self.chat_id)
-                    text_raw = str(message.get("text", "")).strip()
+                        expected_id = str(self.chat_id).strip()
+                        if expected_id and sender_id and sender_id != expected_id:
+                            self.send_message("⚠️ *Access Restricted*\nThis trading bot is restricted to its authorized administrator.", chat_id=chat_id)
+                            continue
 
-                    if not text_raw:
-                        continue
+                        self.handle_command(text_raw, engine_context, target_chat_id=chat_id)
 
-                    if not self.chat_id or self.chat_id == "0":
-                        self.chat_id = sender_id
-                        self._save_chat_id_to_env(sender_id)
+                if max_uid > self.last_update_id:
+                    self._save_offset(max_uid)
+                    self._api_call("getUpdates", params={"offset": max_uid + 1, "limit": 1}, timeout=5)
 
-                    expected_id = str(self.chat_id).strip()
-                    if expected_id and sender_id and sender_id != expected_id:
-                        self.send_message("⚠️ *Access Restricted*\nThis trading bot is restricted to its authorized administrator.", chat_id=chat_id)
-                        continue
-
-                    self.handle_command(text_raw, engine_context, target_chat_id=chat_id)
-
-            if max_uid > self.last_update_id:
-                self._save_offset(max_uid)
-                self._api_call("getUpdates", params={"offset": max_uid + 1, "limit": 1}, timeout=5)
-
-        except Exception as e:
-            logger.error(f"Error handling updates: {e}")
+            except Exception as e:
+                logger.error(f"Error handling updates: {e}")
+                break
 
     def handle_command(self, cmd: str, engine_context: Optional[Any] = None, target_chat_id: Optional[str] = None):
         """Routes text commands to formatters."""
@@ -859,11 +865,8 @@ class TelegramNotifier:
             self.send_message(card_text, reply_markup=markup, chat_id=cid)
 
         elif any(cmd_lower.startswith(x) for x in ["/check", "check", "⚡ check now", "⚡"]):
-            self.send_message("⚡ *Evaluating Live Forex Markets...*\nScanning 8 institutional models across EURUSD, GBPUSD, EURJPY, USDCAD.\nPlease stand by...", chat_id=cid)
-            if engine_context and hasattr(engine_context, "run_single_cycle"):
-                engine_context.run_single_cycle(process_updates=False)
             card_text, markup = format_live_status_card(engine=engine_context)
-            self.send_message(f"✅ *Evaluation Completed!*\n\n{card_text}", reply_markup=markup, chat_id=cid)
+            self.send_message(f"⚡ *Live 15m Candle Evaluation Completed!*\n\n{card_text}", reply_markup=markup, chat_id=cid)
 
         elif any(cmd_lower.startswith(x) for x in ["/calc", "/project", "/earnings", "calc", "project", "earnings", "🔮 return calculator", "🔮"]):
             parts = cmd_clean.split()

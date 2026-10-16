@@ -42,7 +42,7 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID || '1390044763' }}
           RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD || '100.0' }}
           ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE || '10000.0' }}
-          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'false' }}
+          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE || 'true' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "FXFX Bot Cloud Runner"

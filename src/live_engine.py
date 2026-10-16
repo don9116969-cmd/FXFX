@@ -320,16 +320,20 @@ class LivePortfolioEngine:
             now_str = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
             open_cnt = len(self.active_trades)
             hb_msg = (
-                f"📡 *FXFX Live Cycle Evaluation Complete*\n"
+                f"📡 *FXFX 15-Minute Cycle Evaluation Complete*\n"
                 f"⏰ `{now_str}`\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"• Strategies Scanned: *8 Models Active*\n"
-                f"• Open Positions: *{open_cnt} Active Trades*\n"
-                f"• Signal Status: Monitoring (London ORB, Turtle Soup, VR MR)\n"
+                f"• Strategies Scanned: *8 Champion Models (100% 15m)*\n"
+                f"• Active In-Flight Trades: *{open_cnt} Open Positions*\n"
+                f"• Signal Engine: Scanning London ORB & Turtle Soup sweeps\n"
                 f"━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"ℹ️ *All feeds online & healthy. Next check in 15 mins.*"
+                f"ℹ️ *All market feeds healthy. Next candle scan in 15 mins.*"
             )
             self.notifier.send_message(hb_msg)
+
+        if process_updates:
+            # Final drain of any user clicks that occurred during notification dispatch
+            self.notifier.process_incoming_updates(self)
 
     def run_continuous_loop(self, poll_interval: int = 60, port: int = 8080):
         """Continuous 24/5 daemon with HTTP keep-alive and background Telegram bot listener."""
