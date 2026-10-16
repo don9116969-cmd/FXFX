@@ -321,3 +321,4 @@ date,strategy,strategy_name,pair,timeframe,side,entry_time,exit_time,entry_price
 2026-10-09,strat_2_eurjpy_turtle,Rank 2: Turtle Soup Sweep (EURJPY 15m),EURJPY,15m,BUY,2026-10-09 13:00:00 UTC,2026-10-09 21:00:00 UTC,177.25599,177.09301,680.29,100.0,-110.88,-0.09,SL,32
 2026-10-09,strat_3_gbpjpy_turtle,Rank 3: Turtle Soup Sweep (GBPJPY 15m),GBPJPY,15m,BUY,2026-10-09 13:00:00 UTC,2026-10-09 14:15:00 UTC,209.15699,209.47498,564.99,100.0,179.66,0.15,TP,5
 2026-10-16,strat_2_eurjpy_turtle,Rank 2: Turtle Soup Sweep (EURJPY 15m),EURJPY,15m,SELL,2026-10-16 11:31:32 UTC,2026-10-16 12:28:25 UTC,177.878,177.69499,952.43,100.0,174.31,0.1,TP,2
+2026-10-16,strat_3_gbpjpy_turtle,Rank 3: Turtle Soup Sweep (GBPJPY 15m),GBPJPY,15m,SELL,2026-10-16 11:46:10 UTC,2026-10-16 12:46:03 UTC,210.791,210.64699,1030.93,100.0,148.46,0.07,TP,1
