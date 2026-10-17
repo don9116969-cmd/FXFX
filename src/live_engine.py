@@ -314,8 +314,8 @@ class LivePortfolioEngine:
         refresh_markdown_journal(self.active_trades)
         logger.info("Cycle completed.")
 
-        # Optional cycle heartbeat notification
-        should_notify = notify_heartbeat or os.getenv("NOTIFY_CYCLE", "false").lower() in ("true", "1", "yes")
+        # Optional cycle heartbeat notification (disabled by default to eliminate chat spam)
+        should_notify = notify_heartbeat and os.getenv("NOTIFY_CYCLE", "false").lower() in ("true", "1", "yes")
         if should_notify and len(self.active_trades) == trades_before:
             now_str = now_utc.strftime("%Y-%m-%d %H:%M:%S UTC")
             open_cnt = len(self.active_trades)

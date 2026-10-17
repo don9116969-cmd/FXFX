@@ -1,11 +1,8 @@
 name: FXFX 24/5 Live Portfolio Monitor
 
 on:
-  schedule:
-    # Automated fallback: Runs every 15 minutes around the clock (Mon - Fri)
-    - cron: '*/15 * * * 1-5'
   workflow_dispatch: # Allows manual trigger from GitHub UI anytime or via API
-  repository_dispatch: # Triggered by external webhook on exact schedule
+  repository_dispatch: # Triggered by external webhook on exact schedule (e.g. cron-job.org)
     types: [cron_trigger, forex_check]
 
 concurrency:
@@ -42,12 +39,12 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           RISK_PER_TRADE_USD: ${{ secrets.RISK_PER_TRADE_USD }}
           ACCOUNT_BALANCE: ${{ secrets.ACCOUNT_BALANCE }}
-          NOTIFY_CYCLE: ${{ secrets.NOTIFY_CYCLE }}
+          NOTIFY_CYCLE: "false"
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config --global user.name "FXFX Bot Cloud Runner"
           git config --global user.email "bot@github-actions.internal"
-          python -u src/live_engine.py --once --notify
+          python -u src/live_engine.py --once
 
       - name: Commit and Push Journal & State Updates
         if: always()
