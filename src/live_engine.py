@@ -72,6 +72,16 @@ class LivePortfolioEngine:
         self.active_trades: Dict[str, Dict[str, Any]] = load_active_trades()
         self.last_bar_times: Dict[str, Any] = {}
         self._data_cache: Dict[str, pd.DataFrame] = {}
+
+        # Automatically purge any obsolete zombie trades whose strategy ID is not in PORTFOLIO_STRATEGIES
+        valid_ids = {s["id"] for s in PORTFOLIO_STRATEGIES}
+        orphaned = [sid for sid in list(self.active_trades.keys()) if sid not in valid_ids]
+        if orphaned:
+            logger.warning(f"Purging {len(orphaned)} obsolete zombie trades from active portfolio: {orphaned}")
+            for oid in orphaned:
+                del self.active_trades[oid]
+            self._save_state()
+
         # Ensure trade journal markdown is synchronized on startup
         refresh_markdown_journal(self.active_trades)
 

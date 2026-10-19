@@ -206,6 +206,10 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
         except Exception:
             active_trades = {}
 
+    # Filter active trades to only include currently active portfolio strategies
+    valid_ids = {s["id"] for s in config.PORTFOLIO_STRATEGIES}
+    active_trades = {k: v for k, v in active_trades.items() if k in valid_ids}
+
     if not active_trades:
         today_date_str = now_utc.strftime("%Y-%m-%d")
         today_count = 0

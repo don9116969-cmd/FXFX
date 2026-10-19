@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-19 16:16:06 UTC*
+*Last Updated: 2026-10-19 16:17:14 UTC*
 
 ---
 
@@ -8,11 +8,7 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 4: London ORB (EURUSD 15m)** | `EURUSD` | 🟢 BUY | 2026-10-16 07:31:38 UTC | `1.12477` | `1.12653` | `1.12395` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 6: London ORB Tight (EURUSD 15m)** | `EURUSD` | 🟢 BUY | 2026-10-16 07:31:40 UTC | `1.12477` | `1.12653` | `1.12395` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 1: London ORB (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-16 09:01:39 UTC | `177.67099` | `178.21798` | `177.30801` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 2: London ORB (GBPUSD 15m)** | `GBPUSD` | 🟢 BUY | 2026-10-16 09:01:41 UTC | `1.33283` | `1.34046` | `1.32910` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🔴 SELL | 2026-10-19 14:01:42 UTC | `177.69700` | `177.50799` | `177.79600` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🔴 SELL | 2026-10-19 14:01:42 UTC | `177.70000` | `177.51000` | `177.80000` | 8 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
