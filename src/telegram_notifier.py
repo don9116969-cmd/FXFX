@@ -224,11 +224,13 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
             except Exception:
                 pass
 
-        p_sign = "+" if today_pnl > 0 else ""
+        pnl_fmt_today = f"+${today_pnl:,.2f}" if today_pnl >= 0 else f"-${abs(today_pnl):,.2f}"
         today_perf_str = (
             f"• Closed Trades Today: {today_count}\n"
-            f"• Realized Net PnL: *{p_sign}${today_pnl:+,.2f}*\n"
+            f"• Realized Net PnL: *{pnl_fmt_today}*\n"
         ) if today_count > 0 else "• Closed Trades Today: 0 (No completed exits yet)\n"
+
+        strat_lines = "\n".join([f"• {s['name']}" for s in config.PORTFOLIO_STRATEGIES])
 
         msg = (
             f"⚪ *NO OPEN POSITIONS IN-FLIGHT*\n"
@@ -241,15 +243,8 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
             f"📈 *Today's Session So Far:*\n"
             f"{today_perf_str}"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"Bot is scanning 15m & 1h market candles across all 8 quantitative models:\n"
-            f"• Rank 1: London ORB (EURJPY 15m)\n"
-            f"• Rank 2: London ORB (GBPUSD 15m)\n"
-            f"• Rank 3: Turtle Soup Sweep (USDCAD 15m)\n"
-            f"• Rank 4: London ORB (EURUSD 15m)\n"
-            f"• Rank 5: Turtle Soup Sweep (EURJPY 15m)\n"
-            f"• Rank 6: London ORB Tight (EURUSD 15m)\n"
-            f"• Rank 7: Turtle Soup Tight (USDCAD 15m)\n"
-            f"• Rank 8: Variance Ratio MR (EURUSD 1h)\n\n"
+            f"Bot is scanning 15m market candles across all 8 institutional models:\n"
+            f"{strat_lines}\n\n"
             f"🔔 *Instant notification will fire the exact second a trade enters!*"
         )
         return msg, inline_kb
@@ -344,13 +339,13 @@ def format_today_trades_card() -> Tuple[str, Dict[str, Any]]:
     net_pnl = float(today_trades["net_pnl"].sum())
     wins = len(today_trades[today_trades["net_pnl"] > 0])
     losses = len(today_trades[today_trades["net_pnl"] <= 0])
-    p_sign = "+" if net_pnl > 0 else ""
+    pnl_fmt_today = f"+${net_pnl:,.2f}" if net_pnl >= 0 else f"-${abs(net_pnl):,.2f}"
 
     msg = (
         f"📜 *TODAY'S TRADE SUMMARY: {now_utc.strftime('%A, %d-%b-%Y')}*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🔢 *Total Executed Trades:* {count} ({wins} Wins / {losses} Losses)\n"
-        f"💎 *TODAY'S NET PnL:* *{p_sign}${net_pnl:+,.2f}*\n"
+        f"💎 *TODAY'S NET PnL:* *{pnl_fmt_today}*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"*Executed Trades Breakdown:*\n"
     )
