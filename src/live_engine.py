@@ -157,7 +157,7 @@ class LivePortfolioEngine:
         last_closed_time = df.index[-2]
         current_candle = df.iloc[-1]
 
-        # 1. Manage Active Trade
+        # 1. Manage Active Trade (Chronological multi-candle replay since entry)
         if sid in self.active_trades:
             trade = self.active_trades[sid]
             side = trade["side"]
@@ -166,76 +166,104 @@ class LivePortfolioEngine:
             entry_price = trade["entry_price"]
             units = trade["units"]
             max_bars = trade.get("max_bars", 32)
+            entry_t_str = trade.get("entry_time_str", "")
 
-            curr_h = current_candle["High"]
-            curr_l = current_candle["Low"]
-            curr_c = current_candle["Close"]
+            try:
+                entry_dt = pd.to_datetime(entry_t_str, utc=True)
+            except Exception:
+                entry_dt = None
+
+            # Slicing all candles that formed from entry time forward
+            if entry_dt is not None:
+                eval_candles = df[df.index >= (entry_dt - pd.Timedelta(minutes=15))]
+            else:
+                eval_candles = df.iloc[-10:]
 
             exit_price = None
             exit_reason = None
-            trade["bars_held"] = trade.get("bars_held", 0) + 1
+            exit_time_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+            bars_held = 0
 
-            if side == 1:
-                if curr_l <= sl:
-                    exit_price = min(current_candle["Open"], sl)
-                    exit_reason = "SL"
-                elif curr_h >= tp:
-                    exit_price = max(current_candle["Open"], tp)
-                    exit_reason = "TP"
-                elif trade["bars_held"] >= max_bars:
-                    exit_price = curr_c
-                    exit_reason = "TIMEOUT"
+            # Spread allowance buffer (1.0x spread_val) prevents feed discrepancies
+            # between retail ECN brokers and Yahoo Finance interbank feeds from unfairly missing TP
+            tp_tolerance = spread_val
 
-                if exit_price is not None:
+            for c_time, candle in eval_candles.iterrows():
+                # Skip historical candles that closed before trade was opened
+                if entry_dt is not None and c_time < (entry_dt - pd.Timedelta(seconds=30)):
+                    continue
+
+                bars_held += 1
+                c_h = float(candle["High"])
+                c_l = float(candle["Low"])
+                c_o = float(candle["Open"])
+                c_c = float(candle["Close"])
+
+                if side == 1:  # BUY (LONG)
+                    # Check Stop Loss first (conservative risk management)
+                    if c_l <= sl:
+                        exit_price = min(c_o, sl)
+                        exit_reason = "SL"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+                    # Check Take Profit (with quote/spread tolerance)
+                    elif c_h >= (tp - tp_tolerance):
+                        exit_price = max(c_o, tp)
+                        exit_reason = "TP"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+                    # Check Max Bars Timeout
+                    elif bars_held >= max_bars:
+                        exit_price = c_c
+                        exit_reason = "TIMEOUT"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+
+                elif side == -1:  # SELL (SHORT)
+                    # Check Stop Loss first (conservative risk management)
+                    if c_h >= sl:
+                        exit_price = max(c_o, sl)
+                        exit_reason = "SL"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+                    # Check Take Profit (with quote/spread tolerance)
+                    elif c_l <= (tp + tp_tolerance):
+                        exit_price = min(c_o, tp)
+                        exit_reason = "TP"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+                    # Check Max Bars Timeout
+                    elif bars_held >= max_bars:
+                        exit_price = c_c
+                        exit_reason = "TIMEOUT"
+                        exit_time_str = c_time.strftime("%Y-%m-%d %H:%M:%S UTC")
+                        break
+
+            trade["bars_held"] = bars_held
+
+            if exit_price is not None:
+                if side == 1:
                     actual_exit = exit_price - (spread_val / 2.0)
                     pnl = (actual_exit - entry_price) * units
                     pnl_pct = ((actual_exit - entry_price) / entry_price) * 100
-
-                    trade.update({
-                        "exit_price": actual_exit,
-                        "exit_time_str": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                        "exit_reason": exit_reason,
-                        "pnl": round(pnl, 2),
-                        "pnl_pct": round(pnl_pct, 2)
-                    })
-                    logger.info(f"[{strat_cfg['name']}] EXITED ({exit_reason}) | PnL: ${pnl:.2f}")
-                    # Dispatch deduplicated alert
-                    self.notifier.alert_trade_exit(trade)
-                    # Log to trade journal CSV & Markdown ledger
-                    log_trade_to_journal(trade, sync_git=True)
-                    del self.active_trades[sid]
-                    self._save_state()
-
-            elif side == -1:
-                if curr_h >= sl:
-                    exit_price = max(current_candle["Open"], sl)
-                    exit_reason = "SL"
-                elif curr_l <= tp:
-                    exit_price = min(current_candle["Open"], tp)
-                    exit_reason = "TP"
-                elif trade["bars_held"] >= max_bars:
-                    exit_price = curr_c
-                    exit_reason = "TIMEOUT"
-
-                if exit_price is not None:
+                else:
                     actual_exit = exit_price + (spread_val / 2.0)
                     pnl = (entry_price - actual_exit) * units
                     pnl_pct = ((entry_price - actual_exit) / entry_price) * 100
 
-                    trade.update({
-                        "exit_price": actual_exit,
-                        "exit_time_str": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
-                        "exit_reason": exit_reason,
-                        "pnl": round(pnl, 2),
-                        "pnl_pct": round(pnl_pct, 2)
-                    })
-                    logger.info(f"[{strat_cfg['name']}] EXITED ({exit_reason}) | PnL: ${pnl:.2f}")
-                    # Dispatch deduplicated alert
-                    self.notifier.alert_trade_exit(trade)
-                    # Log to trade journal CSV & Markdown ledger
-                    log_trade_to_journal(trade, sync_git=True)
-                    del self.active_trades[sid]
-                    self._save_state()
+                trade.update({
+                    "exit_price": actual_exit,
+                    "exit_time_str": exit_time_str,
+                    "exit_reason": exit_reason,
+                    "pnl": round(pnl, 2),
+                    "pnl_pct": round(pnl_pct, 2),
+                    "bars_held": bars_held
+                })
+                logger.info(f"[{strat_cfg['name']}] EXITED ({exit_reason}) on candle {exit_time_str} | PnL: ${pnl:.2f}")
+                self.notifier.alert_trade_exit(trade)
+                log_trade_to_journal(trade, sync_git=True)
+                del self.active_trades[sid]
+                self._save_state()
 
         # 2. Check Signals
         else:
