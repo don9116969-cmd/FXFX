@@ -324,3 +324,4 @@ date,strategy,strategy_name,pair,timeframe,side,entry_time,exit_time,entry_price
 2026-10-16,strat_3_gbpjpy_turtle,Rank 3: Turtle Soup Sweep (GBPJPY 15m),GBPJPY,15m,SELL,2026-10-16 11:46:10 UTC,2026-10-16 12:46:03 UTC,210.791,210.64699,1030.93,100.0,148.46,0.07,TP,1
 2026-10-16,strat_6_usdcad_turtle,Rank 6: Turtle Soup Sweep (USDCAD 15m),USDCAD,15m,BUY,2026-10-16 14:16:11 UTC,2026-10-19 00:01:42 UTC,1.41406,1.41178,104712.38,100.0,-237.7,-0.16,SL,1
 2026-10-16,strat_3_gbpjpy_turtle,Rank 3: Turtle Soup Sweep (GBPJPY 15m),GBPJPY,15m,SELL,2026-10-16 14:31:35 UTC,2026-10-16 16:14:34 UTC,210.82701,210.54901,645.17,100.0,179.35,0.13,TP,1
+2026-10-16,strat_3_gbpjpy_turtle,Rank 3: Turtle Soup Sweep (GBPJPY 15m),GBPJPY,15m,BUY,2026-10-16 21:01:39 UTC,2026-10-19 00:16:02 UTC,210.58899,210.27499,326.8,100.0,-102.61,-0.15,SL,2

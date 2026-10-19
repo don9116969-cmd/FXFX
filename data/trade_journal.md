@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-19 00:01:44 UTC*
+*Last Updated: 2026-10-19 00:16:03 UTC*
 
 ---
 
@@ -19,10 +19,10 @@
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 325
-- **Win Rate**: **52.0%** (169 Wins / 156 Losses)
-- **Net Realized PnL**: **+$8,973.25**
-- **Current Account Balance**: **USD $18,973.25** (+89.73% Return)
+- **Total Executed Trades**: 326
+- **Win Rate**: **51.8%** (169 Wins / 157 Losses)
+- **Net Realized PnL**: **+$8,870.64**
+- **Current Account Balance**: **USD $18,870.64** (+88.71% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -31,6 +31,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-16 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🟢 BUY | 2026-10-16 21:01:39 UTC | 2026-10-19 00:16:02 UTC | 210.58899 | 210.27499 | **-$102.61** | `SL` | 2 |
 | 2026-10-16 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-16 14:31:35 UTC | 2026-10-16 16:14:34 UTC | 210.82701 | 210.54901 | **+$179.35** | `TP` | 1 |
 | 2026-10-16 | Rank 6: Turtle Soup Sweep (USDCAD 15m) | `USDCAD` | 🟢 BUY | 2026-10-16 14:16:11 UTC | 2026-10-19 00:01:42 UTC | 1.41406 | 1.41178 | **-$237.70** | `SL` | 1 |
 | 2026-10-16 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-16 11:46:10 UTC | 2026-10-16 12:46:03 UTC | 210.79100 | 210.64699 | **+$148.46** | `TP` | 1 |
