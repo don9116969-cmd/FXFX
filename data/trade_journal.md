@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-20 13:31:28 UTC*
+*Last Updated: 2026-10-20 13:46:11 UTC*
 
 ---
 
@@ -15,10 +15,10 @@
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 333
-- **Win Rate**: **51.7%** (172 Wins / 161 Losses)
-- **Net Realized PnL**: **+$8,903.11**
-- **Current Account Balance**: **USD $18,903.11** (+89.03% Return)
+- **Total Executed Trades**: 334
+- **Win Rate**: **51.5%** (172 Wins / 162 Losses)
+- **Net Realized PnL**: **+$8,795.77**
+- **Current Account Balance**: **USD $18,795.77** (+87.96% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-20 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-20 13:31:24 UTC | 2026-10-20 13:45:00 UTC | 211.36200 | 211.47900 | **-$107.34** | `SL` | 1 |
 | 2026-10-20 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🔴 SELL | 2026-10-20 09:16:10 UTC | 2026-10-20 09:30:00 UTC | 1.12092 | 1.12214 | **-$102.94** | `SL` | 1 |
 | 2026-10-20 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-20 07:16:14 UTC | 2026-10-20 09:00:00 UTC | 177.52500 | 177.39101 | **-$104.69** | `SL` | 7 |
 | 2026-10-20 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-20 07:01:44 UTC | 2026-10-20 12:00:00 UTC | 211.10701 | 211.03600 | **+$46.41** | `TIMEOUT` | 20 |
