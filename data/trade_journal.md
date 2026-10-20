@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-20 09:16:15 UTC*
+*Last Updated: 2026-10-20 09:31:28 UTC*
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-20 07:01:44 UTC | `211.10701` | `210.83700` | `211.26001` | 9 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-20 09:16:10 UTC | `1.12092` | `1.11826` | `1.12211` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-20 07:01:44 UTC | `211.10701` | `210.83700` | `211.26001` | 10 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-20 09:16:10 UTC | `1.12092` | `1.11826` | `1.12211` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
