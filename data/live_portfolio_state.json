@@ -14,21 +14,5 @@
     "max_bars": 20,
     "bars_held": 0,
     "entry_time_str": "2026-10-20 07:01:44 UTC"
-  },
-  "strat_1_eurusd_orb": {
-    "strategy_id": "strat_1_eurusd_orb",
-    "strategy_name": "Rank 1: London ORB (EURUSD 15m)",
-    "pair": "EURUSD",
-    "timeframe": "15m",
-    "side": -1,
-    "entry_price": 1.1209155796432495,
-    "sl": 1.1221050552368164,
-    "tp": 1.1182646886825562,
-    "units": 84070.66150902005,
-    "risk_usd": 100.0,
-    "rr_ratio": 2.0,
-    "max_bars": 36,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-20 09:16:10 UTC"
   }
 }
