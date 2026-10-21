@@ -1,20 +1,4 @@
 {
-  "strat_7_audusd_orb": {
-    "strategy_id": "strat_7_audusd_orb",
-    "strategy_name": "Rank 7: London ORB (AUDUSD 15m)",
-    "pair": "AUDUSD",
-    "timeframe": "15m",
-    "side": 1,
-    "entry_price": 0.7037747487258911,
-    "sl": 0.7020269632339478,
-    "tp": 0.706407755613327,
-    "units": 57215.25923001705,
-    "risk_usd": 100.0,
-    "rr_ratio": 1.5,
-    "max_bars": 28,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-21 11:01:44 UTC"
-  },
   "strat_3_gbpjpy_turtle": {
     "strategy_id": "strat_3_gbpjpy_turtle",
     "strategy_name": "Rank 3: Turtle Soup Sweep (GBPJPY 15m)",
