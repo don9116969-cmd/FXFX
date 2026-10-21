@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-21 20:46:22 UTC*
+*Last Updated: 2026-10-21 21:01:44 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-21 18:01:45 UTC | `211.90901` | `211.74702` | `212.00500` | 11 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-21 18:01:45 UTC | `211.90901` | `211.74702` | `212.00500` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 338
-- **Win Rate**: **51.2%** (173 Wins / 165 Losses)
-- **Net Realized PnL**: **+$8,606.94**
-- **Current Account Balance**: **USD $18,606.94** (+86.07% Return)
+- **Total Executed Trades**: 339
+- **Win Rate**: **51.3%** (174 Wins / 165 Losses)
+- **Net Realized PnL**: **+$8,767.36**
+- **Current Account Balance**: **USD $18,767.36** (+87.67% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-21 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-21 18:01:45 UTC | 2026-10-21 20:45:00 UTC | 211.90901 | 211.75502 | **+$160.42** | `TP` | 11 |
 | 2026-10-21 | Rank 7: London ORB (AUDUSD 15m) | `AUDUSD` | 🟢 BUY | 2026-10-21 11:01:44 UTC | 2026-10-21 18:00:00 UTC | 0.70377 | 0.70354 | **-$13.65** | `TIMEOUT` | 28 |
 | 2026-10-21 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🟢 BUY | 2026-10-21 11:01:40 UTC | 2026-10-21 12:30:00 UTC | 1.12350 | 1.12303 | **-$108.05** | `SL` | 6 |
 | 2026-10-21 | Rank 4: London ORB (GBPUSD 15m) | `GBPUSD` | 🟢 BUY | 2026-10-21 08:01:40 UTC | 2026-10-21 17:00:00 UTC | 1.33895 | 1.33961 | **+$40.87** | `TIMEOUT` | 36 |
