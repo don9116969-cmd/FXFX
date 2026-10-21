@@ -1,18 +1,1 @@
-{
-  "strat_3_gbpjpy_turtle": {
-    "strategy_id": "strat_3_gbpjpy_turtle",
-    "strategy_name": "Rank 3: Turtle Soup Sweep (GBPJPY 15m)",
-    "pair": "GBPJPY",
-    "timeframe": "15m",
-    "side": -1,
-    "entry_price": 211.90900744628905,
-    "sl": 212.00500061035157,
-    "tp": 211.7470178222656,
-    "units": 1041.7408466176857,
-    "risk_usd": 100.0,
-    "rr_ratio": 2.0,
-    "max_bars": 20,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-21 18:01:45 UTC"
-  }
-}
+{}
