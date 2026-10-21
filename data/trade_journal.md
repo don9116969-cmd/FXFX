@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-21 12:31:35 UTC*
+*Last Updated: 2026-10-21 12:46:08 UTC*
 
 ---
 
@@ -8,19 +8,19 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🟢 BUY | 2026-10-21 08:01:40 UTC | `1.33895` | `1.34369` | `1.33735` | 18 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🟢 BUY | 2026-10-21 11:01:40 UTC | `1.12350` | `1.12503` | `1.12307` | 6 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 7: London ORB (AUDUSD 15m)** | `AUDUSD` | 🟢 BUY | 2026-10-21 11:01:44 UTC | `0.70377` | `0.70641` | `0.70203` | 6 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🟢 BUY | 2026-10-21 08:01:40 UTC | `1.33895` | `1.34369` | `1.33735` | 12 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🟢 BUY | 2026-10-21 11:01:40 UTC | `1.12350` | `1.12503` | `1.12307` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 7: London ORB (AUDUSD 15m)** | `AUDUSD` | 🟢 BUY | 2026-10-21 11:01:44 UTC | `0.70377` | `0.70641` | `0.70203` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 335
-- **Win Rate**: **51.3%** (172 Wins / 163 Losses)
-- **Net Realized PnL**: **+$8,687.77**
-- **Current Account Balance**: **USD $18,687.77** (+86.88% Return)
+- **Total Executed Trades**: 336
+- **Win Rate**: **51.2%** (172 Wins / 164 Losses)
+- **Net Realized PnL**: **+$8,579.72**
+- **Current Account Balance**: **USD $18,579.72** (+85.80% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -29,6 +29,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-21 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🟢 BUY | 2026-10-21 11:01:40 UTC | 2026-10-21 12:30:00 UTC | 1.12350 | 1.12303 | **-$108.05** | `SL` | 6 |
 | 2026-10-21 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-21 04:16:05 UTC | 2026-10-21 05:00:00 UTC | 177.50600 | 177.42500 | **-$108.00** | `SL` | 3 |
 | 2026-10-20 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-20 13:31:24 UTC | 2026-10-20 13:45:00 UTC | 211.36200 | 211.47900 | **-$107.34** | `SL` | 1 |
 | 2026-10-20 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🔴 SELL | 2026-10-20 09:16:10 UTC | 2026-10-20 09:30:00 UTC | 1.12092 | 1.12214 | **-$102.94** | `SL` | 1 |
