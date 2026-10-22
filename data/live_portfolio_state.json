@@ -1,1 +1,18 @@
-{}
+{
+  "strat_2_eurjpy_turtle": {
+    "strategy_id": "strat_2_eurjpy_turtle",
+    "strategy_name": "Rank 2: Turtle Soup Sweep (EURJPY 15m)",
+    "pair": "EURJPY",
+    "timeframe": "15m",
+    "side": -1,
+    "entry_price": 176.13900427246094,
+    "sl": 176.26099731445314,
+    "tp": 175.90102478027342,
+    "units": 819.7188820522689,
+    "risk_usd": 100.0,
+    "rr_ratio": 2.0,
+    "max_bars": 36,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-22 17:31:29 UTC"
+  }
+}
