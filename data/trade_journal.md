@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-22 18:46:10 UTC*
+*Last Updated: 2026-10-22 19:01:44 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🔴 SELL | 2026-10-22 17:31:29 UTC | `176.13900` | `175.90102` | `176.26100` | 5 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🔴 SELL | 2026-10-22 17:31:29 UTC | `176.13900` | `175.90102` | `176.26100` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 345
-- **Win Rate**: **50.7%** (175 Wins / 170 Losses)
-- **Net Realized PnL**: **+$8,401.69**
-- **Current Account Balance**: **USD $18,401.69** (+84.02% Return)
+- **Total Executed Trades**: 346
+- **Win Rate**: **50.9%** (176 Wins / 170 Losses)
+- **Net Realized PnL**: **+$8,591.85**
+- **Current Account Balance**: **USD $18,591.85** (+85.92% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-22 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🔴 SELL | 2026-10-22 17:31:29 UTC | 2026-10-22 18:45:00 UTC | 176.13900 | 175.90702 | **+$190.16** | `TP` | 5 |
 | 2026-10-22 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🟢 BUY | 2026-10-22 10:46:11 UTC | 2026-10-22 11:00:00 UTC | 210.00800 | 209.85600 | **-$107.04** | `SL` | 1 |
 | 2026-10-22 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🔴 SELL | 2026-10-22 10:01:46 UTC | 2026-10-22 11:15:00 UTC | 1.12217 | 1.12006 | **+$160.68** | `TP` | 5 |
 | 2026-10-22 | Rank 4: London ORB (GBPUSD 15m) | `GBPUSD` | 🟢 BUY | 2026-10-22 08:31:28 UTC | 2026-10-22 09:45:00 UTC | 1.34149 | 1.33954 | **-$102.64** | `SL` | 5 |
