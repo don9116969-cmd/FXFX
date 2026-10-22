@@ -1,1 +1,18 @@
-{}
+{
+  "strat_4_gbpusd_orb": {
+    "strategy_id": "strat_4_gbpusd_orb",
+    "strategy_name": "Rank 4: London ORB (GBPUSD 15m)",
+    "pair": "GBPUSD",
+    "timeframe": "15m",
+    "side": 1,
+    "entry_price": 1.3414856708526612,
+    "sl": 1.339594841003418,
+    "tp": 1.3469581604003906,
+    "units": 52886.831694571076,
+    "risk_usd": 100.0,
+    "rr_ratio": 3.0,
+    "max_bars": 36,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-22 08:31:28 UTC"
+  }
+}
