@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-22 11:16:12 UTC*
+*Last Updated: 2026-10-22 11:31:39 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-22 10:01:46 UTC | `1.12217` | `1.12002` | `1.12349` | 5 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-22 10:01:46 UTC | `1.12217` | `1.12002` | `1.12349` | 4 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 344
-- **Win Rate**: **50.6%** (174 Wins / 170 Losses)
-- **Net Realized PnL**: **+$8,241.01**
-- **Current Account Balance**: **USD $18,241.01** (+82.41% Return)
+- **Total Executed Trades**: 345
+- **Win Rate**: **50.7%** (175 Wins / 170 Losses)
+- **Net Realized PnL**: **+$8,401.69**
+- **Current Account Balance**: **USD $18,401.69** (+84.02% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -28,6 +28,7 @@
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | 2026-10-22 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🟢 BUY | 2026-10-22 10:46:11 UTC | 2026-10-22 11:00:00 UTC | 210.00800 | 209.85600 | **-$107.04** | `SL` | 1 |
+| 2026-10-22 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🔴 SELL | 2026-10-22 10:01:46 UTC | 2026-10-22 11:15:00 UTC | 1.12217 | 1.12006 | **+$160.68** | `TP` | 5 |
 | 2026-10-22 | Rank 4: London ORB (GBPUSD 15m) | `GBPUSD` | 🟢 BUY | 2026-10-22 08:31:28 UTC | 2026-10-22 09:45:00 UTC | 1.34149 | 1.33954 | **-$102.64** | `SL` | 5 |
 | 2026-10-22 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🟢 BUY | 2026-10-22 06:01:40 UTC | 2026-10-22 06:15:00 UTC | 210.91201 | 210.70500 | **-$104.02** | `SL` | 1 |
 | 2026-10-22 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-22 06:01:37 UTC | 2026-10-22 06:15:00 UTC | 177.01100 | 176.81999 | **-$103.24** | `SL` | 1 |
