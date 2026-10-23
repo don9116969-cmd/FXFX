@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-23 08:31:29 UTC*
+*Last Updated: 2026-10-23 08:46:08 UTC*
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-23 07:31:28 UTC | `1.33730` | `1.33127` | `1.33951` | 4 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-23 07:31:28 UTC | `1.33730` | `1.33127` | `1.33951` | 5 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
