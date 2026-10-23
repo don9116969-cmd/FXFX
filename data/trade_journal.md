@@ -1,13 +1,14 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-22 23:46:06 UTC*
+*Last Updated: 2026-10-23 00:01:39 UTC*
 
 ---
 
 ## 🟢 Live Active Open Positions (In-Flight)
 
-> ℹ️ **No active open positions currently in-flight.**  
-> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m market candles across all 8 quantitative models.*  
+| Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
+|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-23 00:01:39 UTC | `175.65599` | `176.00600` | `175.46599` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
