@@ -12,23 +12,7 @@
     "risk_usd": 100.0,
     "rr_ratio": 3.0,
     "max_bars": 36,
-    "bars_held": 9,
+    "bars_held": 16,
     "entry_time_str": "2026-10-23 07:31:28 UTC"
-  },
-  "strat_6_usdcad_turtle": {
-    "strategy_id": "strat_6_usdcad_turtle",
-    "strategy_name": "Rank 6: Turtle Soup Sweep (USDCAD 15m)",
-    "pair": "USDCAD",
-    "timeframe": "15m",
-    "side": 1,
-    "entry_price": 1.4001549927520751,
-    "sl": 1.399599942970276,
-    "tp": 1.4018800786972045,
-    "units": 180164.02001969444,
-    "risk_usd": 100.0,
-    "rr_ratio": 2.0,
-    "max_bars": 36,
-    "bars_held": 0,
-    "entry_time_str": "2026-10-23 09:46:09 UTC"
   }
 }
