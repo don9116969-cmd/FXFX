@@ -1,14 +1,13 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-26 18:46:11 UTC*
+*Last Updated: 2026-10-26 18:46:13 UTC*
 
 ---
 
 ## 🟢 Live Active Open Positions (In-Flight)
 
-| Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 8: London ORB (USDJPY 15m)** | `USDJPY` | 🟢 BUY | 2026-10-26 09:46:08 UTC | `157.35600` | `158.20801` | `156.93300` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
+> ℹ️ **No active open positions currently in-flight.**  
+> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m market candles across all 8 quantitative models.*  
 
 ---
 
