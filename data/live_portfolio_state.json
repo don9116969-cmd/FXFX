@@ -12,7 +12,7 @@
     "risk_usd": 100.0,
     "rr_ratio": 2.0,
     "max_bars": 36,
-    "bars_held": 2,
+    "bars_held": 10,
     "entry_time_str": "2026-10-26 07:16:09 UTC"
   },
   "strat_4_gbpusd_orb": {
@@ -28,7 +28,23 @@
     "risk_usd": 100.0,
     "rr_ratio": 3.0,
     "max_bars": 36,
-    "bars_held": 0,
+    "bars_held": 8,
     "entry_time_str": "2026-10-26 07:46:04 UTC"
+  },
+  "strat_8_usdjpy_orb": {
+    "strategy_id": "strat_8_usdjpy_orb",
+    "strategy_name": "Rank 8: London ORB (USDJPY 15m)",
+    "pair": "USDJPY",
+    "timeframe": "15m",
+    "side": 1,
+    "entry_price": 157.35599792480468,
+    "sl": 156.93299865722656,
+    "tp": 158.2080078125,
+    "units": 236.4070287226485,
+    "risk_usd": 100.0,
+    "rr_ratio": 2.0,
+    "max_bars": 36,
+    "bars_held": 0,
+    "entry_time_str": "2026-10-26 09:46:08 UTC"
   }
 }
