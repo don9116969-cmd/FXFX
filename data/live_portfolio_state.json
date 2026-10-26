@@ -1,20 +1,4 @@
 {
-  "strat_4_gbpusd_orb": {
-    "strategy_id": "strat_4_gbpusd_orb",
-    "strategy_name": "Rank 4: London ORB (GBPUSD 15m)",
-    "pair": "GBPUSD",
-    "timeframe": "15m",
-    "side": -1,
-    "entry_price": 1.3356162988662719,
-    "sl": 1.3377933502197266,
-    "tp": 1.3294992446899414,
-    "units": 45933.68908882792,
-    "risk_usd": 100.0,
-    "rr_ratio": 3.0,
-    "max_bars": 36,
-    "bars_held": 8,
-    "entry_time_str": "2026-10-26 07:46:04 UTC"
-  },
   "strat_8_usdjpy_orb": {
     "strategy_id": "strat_8_usdjpy_orb",
     "strategy_name": "Rank 8: London ORB (USDJPY 15m)",
