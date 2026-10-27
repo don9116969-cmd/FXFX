@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-27 17:31:36 UTC*
+*Last Updated: 2026-10-27 17:46:14 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-27 08:46:04 UTC | `1.33218` | `1.32716` | `1.33381` | 35 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-27 08:46:04 UTC | `1.33218` | `1.32716` | `1.33381` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 356
-- **Win Rate**: **51.4%** (183 Wins / 173 Losses)
-- **Net Realized PnL**: **+$8,799.18**
-- **Current Account Balance**: **USD $18,799.18** (+87.99% Return)
+- **Total Executed Trades**: 357
+- **Win Rate**: **51.5%** (184 Wins / 173 Losses)
+- **Net Realized PnL**: **+$8,824.71**
+- **Current Account Balance**: **USD $18,824.71** (+88.25% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-27 | Rank 4: London ORB (GBPUSD 15m) | `GBPUSD` | 🔴 SELL | 2026-10-27 08:46:04 UTC | 2026-10-27 17:45:00 UTC | 1.33218 | 1.33177 | **+$25.53** | `TIMEOUT` | 36 |
 | 2026-10-27 | Rank 1: London ORB (EURUSD 15m) | `EURUSD` | 🔴 SELL | 2026-10-27 07:16:07 UTC | 2026-10-27 09:00:00 UTC | 1.11604 | 1.11493 | **+$136.45** | `TP` | 7 |
 | 2026-10-26 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-26 15:01:50 UTC | 2026-10-26 16:00:00 UTC | 210.17100 | 210.35699 | **-$104.49** | `SL` | 4 |
 | 2026-10-26 | Rank 8: London ORB (USDJPY 15m) | `USDJPY` | 🟢 BUY | 2026-10-26 09:46:08 UTC | 2026-10-26 18:45:00 UTC | 157.35600 | 157.42400 | **+$16.08** | `TIMEOUT` | 36 |
