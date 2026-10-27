@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-27 08:46:07 UTC*
+*Last Updated: 2026-10-27 09:01:41 UTC*
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-27 07:16:07 UTC | `1.11604` | `1.11490` | `1.11685` | 6 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-27 08:46:04 UTC | `1.33218` | `1.32716` | `1.33381` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 1: London ORB (EURUSD 15m)** | `EURUSD` | 🔴 SELL | 2026-10-27 07:16:07 UTC | `1.11604` | `1.11490` | `1.11685` | 7 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 4: London ORB (GBPUSD 15m)** | `GBPUSD` | 🔴 SELL | 2026-10-27 08:46:04 UTC | `1.33218` | `1.32716` | `1.33381` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
