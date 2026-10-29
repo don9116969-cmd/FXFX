@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-29 11:16:11 UTC*
+*Last Updated: 2026-10-29 11:31:28 UTC*
 
 ---
 
@@ -8,8 +8,8 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 5: Turtle Soup Sweep (AUDUSD 15m)** | `AUDUSD` | 🟢 BUY | 2026-10-29 09:01:40 UTC | `0.70402` | `0.70624` | `0.70328` | 8 bars | `🟢 ACTIVE / IN-PROGRESS` |
-| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-29 11:01:40 UTC | `210.51001` | `210.38201` | `210.59500` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 5: Turtle Soup Sweep (AUDUSD 15m)** | `AUDUSD` | 🟢 BUY | 2026-10-29 09:01:40 UTC | `0.70402` | `0.70624` | `0.70328` | 10 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-29 11:01:40 UTC | `210.51001` | `210.38201` | `210.59500` | 2 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
