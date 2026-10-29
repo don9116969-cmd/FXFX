@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-29 03:46:01 UTC*
+*Last Updated: 2026-10-29 04:01:40 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-29 02:01:33 UTC | `175.91001` | `176.12397` | `175.79100` | 6 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-29 02:01:33 UTC | `175.91001` | `176.12397` | `175.79100` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 361
-- **Win Rate**: **51.0%** (184 Wins / 177 Losses)
-- **Net Realized PnL**: **+$8,403.92**
-- **Current Account Balance**: **USD $18,403.92** (+84.04% Return)
+- **Total Executed Trades**: 362
+- **Win Rate**: **50.8%** (184 Wins / 178 Losses)
+- **Net Realized PnL**: **+$8,298.88**
+- **Current Account Balance**: **USD $18,298.88** (+82.99% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-29 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-29 02:01:33 UTC | 2026-10-29 03:45:00 UTC | 175.91001 | 175.78500 | **-$105.04** | `SL` | 7 |
 | 2026-10-28 | Rank 6: Turtle Soup Sweep (USDCAD 15m) | `USDCAD` | 🟢 BUY | 2026-10-28 19:01:46 UTC | 2026-10-28 19:15:00 UTC | 1.40208 | 1.39984 | **-$102.52** | `SL` | 1 |
 | 2026-10-28 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🔴 SELL | 2026-10-28 14:01:39 UTC | 2026-10-28 14:45:00 UTC | 176.02200 | 176.14200 | **-$105.26** | `SL` | 3 |
 | 2026-10-28 | Rank 6: Turtle Soup Sweep (USDCAD 15m) | `USDCAD` | 🟢 BUY | 2026-10-28 11:46:09 UTC | 2026-10-28 12:00:00 UTC | 1.40382 | 1.40285 | **-$105.95** | `SL` | 1 |
