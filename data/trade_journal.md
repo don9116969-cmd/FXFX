@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-29 20:16:10 UTC*
+*Last Updated: 2026-10-29 20:31:29 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-29 15:31:26 UTC | `211.00300` | `210.64597` | `211.19500` | 19 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 3: Turtle Soup Sweep (GBPJPY 15m)** | `GBPJPY` | 🔴 SELL | 2026-10-29 15:31:26 UTC | `211.00300` | `210.64597` | `211.19500` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 367
-- **Win Rate**: **50.4%** (185 Wins / 182 Losses)
-- **Net Realized PnL**: **+$8,016.61**
-- **Current Account Balance**: **USD $18,016.61** (+80.17% Return)
+- **Total Executed Trades**: 368
+- **Win Rate**: **50.3%** (185 Wins / 183 Losses)
+- **Net Realized PnL**: **+$8,002.55**
+- **Current Account Balance**: **USD $18,002.55** (+80.03% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-29 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-29 15:31:26 UTC | 2026-10-29 20:30:00 UTC | 211.00300 | 211.03000 | **-$14.06** | `TIMEOUT` | 20 |
 | 2026-10-29 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-29 13:31:32 UTC | 2026-10-29 13:45:00 UTC | 175.81301 | 175.50100 | **-$124.79** | `SL` | 1 |
 | 2026-10-29 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-29 11:01:40 UTC | 2026-10-29 11:45:00 UTC | 210.51001 | 210.60300 | **-$109.41** | `SL` | 3 |
 | 2026-10-29 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🟢 BUY | 2026-10-29 09:31:31 UTC | 2026-10-29 09:45:00 UTC | 210.03901 | 210.19399 | **+$163.14** | `TP` | 1 |
