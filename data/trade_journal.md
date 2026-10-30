@@ -1,6 +1,6 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-30 05:01:40 UTC*
+*Last Updated: 2026-10-30 05:16:08 UTC*
 
 ---
 
@@ -8,17 +8,17 @@
 
 | Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-30 04:46:07 UTC | `176.02300` | `176.19601` | `175.92901` | 1 bars | `🟢 ACTIVE / IN-PROGRESS` |
+| **Rank 2: Turtle Soup Sweep (EURJPY 15m)** | `EURJPY` | 🟢 BUY | 2026-10-30 04:46:07 UTC | `176.02300` | `176.19601` | `175.92901` | 0 bars | `🟢 ACTIVE / IN-PROGRESS` |
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
 - **Starting Portfolio Capital**: USD $10,000.00
-- **Total Executed Trades**: 369
-- **Win Rate**: **50.4%** (186 Wins / 183 Losses)
-- **Net Realized PnL**: **+$8,186.21**
-- **Current Account Balance**: **USD $18,186.21** (+81.86% Return)
+- **Total Executed Trades**: 370
+- **Win Rate**: **50.5%** (187 Wins / 183 Losses)
+- **Net Realized PnL**: **+$8,363.89**
+- **Current Account Balance**: **USD $18,363.89** (+83.64% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---
@@ -27,6 +27,7 @@
 
 | Date | Strategy | Pair | Side | Entry Time | Exit Time | Entry P | Exit P | Net PnL | Reason | Bars |
 |:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
+| 2026-10-30 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-30 04:46:07 UTC | 2026-10-30 05:00:00 UTC | 176.02300 | 176.19001 | **+$177.68** | `TP` | 1 |
 | 2026-10-30 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-30 00:16:10 UTC | 2026-10-30 04:30:00 UTC | 211.01300 | 210.55200 | **+$183.66** | `TP` | 17 |
 | 2026-10-29 | Rank 3: Turtle Soup Sweep (GBPJPY 15m) | `GBPJPY` | 🔴 SELL | 2026-10-29 15:31:26 UTC | 2026-10-29 20:30:00 UTC | 211.00300 | 211.03000 | **-$14.06** | `TIMEOUT` | 20 |
 | 2026-10-29 | Rank 2: Turtle Soup Sweep (EURJPY 15m) | `EURJPY` | 🟢 BUY | 2026-10-29 13:31:32 UTC | 2026-10-29 13:45:00 UTC | 175.81301 | 175.50100 | **-$124.79** | `SL` | 1 |
