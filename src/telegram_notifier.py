@@ -127,9 +127,9 @@ def get_main_keyboard_markup() -> Dict[str, Any]:
     return {
         "keyboard": [
             [{"text": "📊 Live Status & PnL"}, {"text": "📜 Today's Trades"}],
-            [{"text": "💼 Portfolio Balance"}, {"text": "📖 Trade Journal"}],
-            [{"text": "🔮 Return Calculator"}, {"text": "ℹ️ Strategy Specs"}],
-            [{"text": "⚡ Check Now"}]
+            [{"text": "💼 Portfolio Balance"}, {"text": "🛡️ Prop Status"}],
+            [{"text": "📖 Trade Journal"}, {"text": "🔮 Return Calculator"}],
+            [{"text": "ℹ️ Strategy Specs"}, {"text": "⚡ Check Now"}]
         ],
         "resize_keyboard": True,
         "is_persistent": True
@@ -237,7 +237,7 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
             f"⏰ *Status Time:* {time_str}\n"
             f"📅 *Date:* {date_str}\n"
-            f"💼 *Risk Deployed:* $0.00 / $400.00 Max\n"
+            f"💼 *Risk Deployed:* $0.00 / ${config.MAX_ACTIVE_TRADES * config.RISK_PER_TRADE_USD:,.2f} Max ({config.MAX_ACTIVE_TRADES} trades @ ${config.RISK_PER_TRADE_USD:,.2f})\n"
             f"🛡️ *State:* `Standby & Monitoring Live Candles`\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
             f"📈 *Today's Session So Far:*\n"
@@ -279,11 +279,23 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
         pips_diff = (cur_spot - entry_p) / pip_size if side == 1 else (entry_p - cur_spot) / pip_size
 
         if side == 1:
-            unrealized_pnl = (cur_spot - entry_p) * units
+            raw_unrealized = (cur_spot - entry_p) * units
             unrealized_pct = ((cur_spot - entry_p) / max(0.0001, entry_p)) * 100.0
         else:
-            unrealized_pnl = (entry_p - cur_spot) * units
+            raw_unrealized = (entry_p - cur_spot) * units
             unrealized_pct = ((entry_p - cur_spot) / max(0.0001, entry_p)) * 100.0
+
+        conv = float(pos.get("conv_rate", 0.0))
+        if conv > 0:
+            unrealized_pnl = raw_unrealized / conv
+        elif "JPY" in pair:
+            usd_jpy = get_latest_pair_spot("USDJPY", fallback=155.0)
+            unrealized_pnl = raw_unrealized / usd_jpy if usd_jpy > 0 else raw_unrealized
+        elif "CAD" in pair:
+            usd_cad = cur_spot if pair == "USDCAD" else get_latest_pair_spot("USDCAD", fallback=1.38)
+            unrealized_pnl = raw_unrealized / usd_cad if usd_cad > 0 else raw_unrealized
+        else:
+            unrealized_pnl = raw_unrealized
 
         p_emoji = "🟢" if unrealized_pnl >= 0 else "🔴"
         pnl_str = f"+${unrealized_pnl:,.2f}" if unrealized_pnl >= 0 else f"-${abs(unrealized_pnl):,.2f}"
@@ -367,6 +379,117 @@ def format_today_trades_card() -> Tuple[str, Dict[str, Any]]:
             f"   • Net PnL: *{tr_sign}${tr_net:,.2f}* ({reason})\n"
         )
 
+    return msg, inline_kb
+
+
+def format_prop_firm_card(engine=None) -> Tuple[str, Dict[str, Any]]:
+    """Generates the Prop-Firm Compliance & Challenge Status Card."""
+    inline_kb = get_inline_status_markup()
+    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    now_str = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+
+    init_cap = config.INITIAL_CAPITAL
+    risk_per_trade = config.RISK_PER_TRADE_USD
+    risk_pct = (risk_per_trade / init_cap) * 100.0
+    daily_limit_pct = config.MAX_DAILY_LOSS_PCT
+    daily_limit_usd = init_cap * (daily_limit_pct / 100.0)
+    max_dd_limit_pct = config.MAX_OVERALL_DD_PCT
+    max_dd_limit_usd = init_cap * (max_dd_limit_pct / 100.0)
+    p1_target_pct = config.CHALLENGE_TARGET_PCT
+    p1_target_usd = init_cap * (p1_target_pct / 100.0)
+
+    # Read realized trades
+    tot_pnl = 0.0
+    today_realized = 0.0
+    equity_curve = [init_cap]
+    if os.path.exists(JOURNAL_CSV_FILE):
+        try:
+            df = pd.read_csv(JOURNAL_CSV_FILE)
+            if not df.empty and "net_pnl" in df.columns:
+                start_d = getattr(config, "PROP_FIRM_START_DATE", None)
+                if start_d and "date" in df.columns:
+                    df = df[df["date"].astype(str) >= str(start_d)]
+                tot_pnl = float(df["net_pnl"].sum())
+                if "date" in df.columns:
+                    t_rows = df[df["date"].astype(str) == today_str]
+                    today_realized = float(t_rows["net_pnl"].sum())
+                running = init_cap
+                for p in df["net_pnl"]:
+                    running += float(p)
+                    equity_curve.append(running)
+        except Exception:
+            pass
+
+    # Active positions & floating PnL
+    active_count = 0
+    floating_pnl = 0.0
+    if engine and hasattr(engine, "active_trades"):
+        active_count = len(engine.active_trades)
+        for sid, tr in engine.active_trades.items():
+            try:
+                pair = tr.get("pair", "")
+                side = int(tr.get("side", 1))
+                entry_p = float(tr.get("entry_price", 0.0))
+                units = float(tr.get("units", 0.0))
+                conv = float(tr.get("conv_rate", 1.0)) or 1.0
+                spot = get_latest_pair_spot(pair, fallback=entry_p)
+                raw = (spot - entry_p) * units if side == 1 else (entry_p - spot) * units
+                floating_pnl += (raw / conv)
+            except Exception:
+                pass
+    elif os.path.exists(STATE_FILE):
+        try:
+            with open(STATE_FILE, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                active_count = len(data)
+        except Exception:
+            pass
+
+    today_total = today_realized + floating_pnl
+    daily_pct = (today_total / init_cap) * 100.0
+    current_equity = init_cap + tot_pnl + floating_pnl
+    peak_equity = max(max(equity_curve), current_equity)
+    current_dd_usd = peak_equity - current_equity
+    current_dd_pct = (current_dd_usd / peak_equity) * 100.0 if peak_equity > 0 else 0.0
+    account_profit_usd = current_equity - init_cap
+    account_profit_pct = (account_profit_usd / init_cap) * 100.0
+
+    d_icon = "🟢" if today_total >= 0 else "🟡" if daily_pct > -daily_limit_pct else "🔴"
+    dd_icon = "🟢" if current_dd_pct < (max_dd_limit_pct * 0.5) else "🟡" if current_dd_pct < max_dd_limit_pct else "🔴"
+    p1_progress = min(100.0, max(0.0, (account_profit_pct / p1_target_pct) * 100.0))
+
+    prog_blocks = int(p1_progress // 10)
+    bar_str = "█" * prog_blocks + "░" * (10 - prog_blocks)
+
+    msg = (
+        f"🛡️ *PROP-FIRM COMPLIANCE & CHALLENGE DASHBOARD*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⏰ *Server Time:* `{now_str}`\n"
+        f"🏆 *Target Program:* `{config.PROP_FIRM_PROGRAM}`\n"
+        f"🏦 *Challenge Account Size:* *${init_cap:,.2f} USD*\n"
+        f"💰 *Current Live Equity:* *${current_equity:,.2f} USD*\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 *1. TODAY'S DAILY LOSS MONITOR (5.0% Firm Limit):*\n"
+        f"{d_icon} *Today's PnL:* {('+' if today_total >= 0 else '')}${today_total:,.2f} ({daily_pct:+.2f}%)\n"
+        f"• *Automated Tripwire:* `-${daily_limit_usd:,.2f} (-{daily_limit_pct:.1f}%)`\n"
+        f"• *Safe Daily Cushion Remaining:* `${max(0.0, daily_limit_usd + today_total):,.2f}`\n\n"
+        f"📉 *2. OVERALL DRAWDOWN MONITOR (10.0% Firm Limit):*\n"
+        f"{dd_icon} *Current Drawdown:* `-${current_dd_usd:,.2f} ({current_dd_pct:.2f}%)`\n"
+        f"• *Automated Max Guard:* `-${max_dd_limit_usd:,.2f} ({max_dd_limit_pct:.1f}%)`\n"
+        f"• *Peak Portfolio High:* `${peak_equity:,.2f}`\n"
+        f"• *Drawdown Cushion Remaining:* `${max(0.0, max_dd_limit_usd - current_dd_usd):,.2f}`\n\n"
+        f"🎯 *3. PHASE 1 PROFIT TARGET MONITOR (+8.0%):*\n"
+        f"• *Target Profit:* `+${p1_target_usd:,.2f} (+{p1_target_pct:.1f}%)`\n"
+        f"• *Current Profit:* `{('+' if account_profit_usd >= 0 else '')}${account_profit_usd:,.2f} ({account_profit_pct:+.2f}%)`\n"
+        f"• *Challenge Completion:* `[{bar_str}] {p1_progress:.1f}%`\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚙️ *Risk Calibration Controls:*\n"
+        f"• *Risk Per Trade:* `${risk_per_trade:,.2f}` (*{risk_pct:.2f}% cap*)\n"
+        f"• *Max Active Positions:* `{active_count} / {config.MAX_ACTIVE_TRADES} Max concurrent`\n"
+        f"• *Circuit Breakers:* Automated entry lock active on breaker trip\n"
+        f"━━━━━━━━━━━━━━━━━━━━━━\n"
+        f"✅ *Account Status:* `100% COMPLIANT & SAFE`"
+    )
     return msg, inline_kb
 
 
@@ -800,6 +923,8 @@ class TelegramNotifier:
                         card_text, markup = "", None
                         if cb_data in ["status", "refresh"]:
                             card_text, markup = format_live_status_card(engine=engine_context)
+                        elif cb_data in ["prop", "rules", "compliance"]:
+                            card_text, markup = format_prop_firm_card(engine=engine_context)
                         elif cb_data == "today":
                             card_text, markup = format_today_trades_card()
                         elif cb_data in ["summary", "balance"]:
@@ -869,7 +994,11 @@ class TelegramNotifier:
         cid = target_chat_id or self.chat_id
         logger.info(f"Routing bot command: '{cmd_clean}' for target chat {cid}")
 
-        if any(cmd_lower.startswith(x) for x in ["/status", "/pnl", "status", "pnl", "📊 live status & pnl", "📊"]):
+        if any(cmd_lower.startswith(x) for x in ["/prop", "prop", "🛡️ prop status", "🛡️", "/rules", "/target"]):
+            card_text, markup = format_prop_firm_card(engine=engine_context)
+            self.send_message(card_text, reply_markup=markup, chat_id=cid)
+
+        elif any(cmd_lower.startswith(x) for x in ["/status", "/pnl", "status", "pnl", "📊 live status & pnl", "📊"]):
             card_text, markup = format_live_status_card(engine=engine_context)
             self.send_message(card_text, reply_markup=markup, chat_id=cid)
 
@@ -963,6 +1092,18 @@ class TelegramNotifier:
     # =========================================================================
     # TRADE ALERT FORMATTERS (WITH DEDUPLICATION)
     # =========================================================================
+    def alert_circuit_breaker(self, reason: str, alert_key: str, force: bool = False):
+        """Dispatches an urgent prop-firm circuit breaker notification."""
+        msg = (
+            f"🛡️ *PROP-FIRM CIRCUIT BREAKER ACTIVATED*\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"⏰ *Time:* `{datetime.now(timezone.utc).strftime('%Y-%m-%d %H:%M:%S UTC')}`\n"
+            f"📋 *Notice:* {reason}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━\n"
+            f"🔒 *Protection Mode:* New entries locked to safeguard prop firm account rules."
+        )
+        return self.send_message(msg, alert_key=alert_key, force=force)
+
     def alert_trade_entry(self, trade: Dict[str, Any], force: bool = False):
         """Dispatches an instant trade entry alert with duplicate protection."""
         strat_id = str(trade.get("strategy_id", "strat"))

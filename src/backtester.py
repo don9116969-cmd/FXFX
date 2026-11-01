@@ -27,7 +27,8 @@ class ForexBacktester:
         fixed_risk_usd: Optional[float] = None,
         spread_pips: float = 0.8,
         slippage_pips: float = 0.2,
-        pip_decimal: int = 4
+        pip_decimal: int = 4,
+        quote_conv_rate: Optional[float] = None
     ):
         self.pair = pair
         self.initial_capital = initial_capital
@@ -37,6 +38,15 @@ class ForexBacktester:
         self.slippage_pips = slippage_pips
         self.pip_decimal = pip_decimal
         self.pip_size = 10 ** (-pip_decimal)
+
+        if quote_conv_rate is not None:
+            self.quote_conv_rate = quote_conv_rate
+        elif "JPY" in pair:
+            self.quote_conv_rate = 155.0
+        elif "CAD" in pair:
+            self.quote_conv_rate = 1.38
+        else:
+            self.quote_conv_rate = 1.0
 
     def run(
         self,
@@ -128,7 +138,8 @@ class ForexBacktester:
                     if exit_price is not None:
                         # Account for exit spread/slippage
                         actual_exit = exit_price - (total_friction / 2.0)
-                        pnl = (actual_exit - entry_price) * units
+                        raw_pnl = (actual_exit - entry_price) * units
+                        pnl = raw_pnl / self.quote_conv_rate
                         equity += pnl
 
                         active_trade.update({
@@ -161,7 +172,8 @@ class ForexBacktester:
                     if exit_price is not None:
                         # Account for exit spread/slippage
                         actual_exit = exit_price + (total_friction / 2.0)
-                        pnl = (entry_price - actual_exit) * units
+                        raw_pnl = (entry_price - actual_exit) * units
+                        pnl = raw_pnl / self.quote_conv_rate
                         equity += pnl
 
                         active_trade.update({
@@ -190,9 +202,11 @@ class ForexBacktester:
                         entry_price = next_open + (total_friction / 2.0)
                         if not np.isnan(proposed_sl) and proposed_sl < entry_price:
                             sl_dist = entry_price - proposed_sl
-                            # Position Sizing
+                            friction_buffer = total_friction / 2.0
+                            effective_sl_dist = sl_dist + friction_buffer
                             risk_usd = self.fixed_risk_usd if self.fixed_risk_usd else equity * (self.risk_per_trade_pct / 100.0)
-                            units = risk_usd / sl_dist if sl_dist > 0 else 0
+                            risk_in_quote = risk_usd * self.quote_conv_rate
+                            units = risk_in_quote / effective_sl_dist if effective_sl_dist > 0 else 0
                             
                             active_trade = {
                                 "pair": self.pair,
@@ -209,8 +223,11 @@ class ForexBacktester:
                         entry_price = next_open - (total_friction / 2.0)
                         if not np.isnan(proposed_sl) and proposed_sl > entry_price:
                             sl_dist = proposed_sl - entry_price
+                            friction_buffer = total_friction / 2.0
+                            effective_sl_dist = sl_dist + friction_buffer
                             risk_usd = self.fixed_risk_usd if self.fixed_risk_usd else equity * (self.risk_per_trade_pct / 100.0)
-                            units = risk_usd / sl_dist if sl_dist > 0 else 0
+                            risk_in_quote = risk_usd * self.quote_conv_rate
+                            units = risk_in_quote / effective_sl_dist if effective_sl_dist > 0 else 0
 
                             active_trade = {
                                 "pair": self.pair,

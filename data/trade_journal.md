@@ -1,24 +1,23 @@
 # 📈 Live Forex Trading Journal & Institutional Execution Log
 
-*Last Updated: 2026-10-30 23:46:06 UTC*
+*Last Updated: 2026-11-01 14:29:28 UTC*
 
 ---
 
 ## 🟢 Live Active Open Positions (In-Flight)
 
-| Strategy | Pair | Direction | Entry Time | Entry Price | Take Profit | Stop Loss | Bars Held | Status |
-|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **Rank 6: Turtle Soup Sweep (USDCAD 15m)** | `USDCAD` | 🔴 SELL | 2026-10-30 21:01:33 UTC | `1.39725` | `1.39496` | `1.39817` | 2 bars | `🟢 ACTIVE / IN-PROGRESS` |
+> ℹ️ **No active open positions currently in-flight.**  
+> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m market candles across all 8 quantitative models.*  
 
 ---
 
 ## 📊 Live Trading Performance Summary
 
-- **Starting Portfolio Capital**: USD $10,000.00
+- **Starting Portfolio Capital**: USD $20,000.00
 - **Total Executed Trades**: 375
 - **Win Rate**: **50.4%** (189 Wins / 186 Losses)
 - **Net Realized PnL**: **+$8,409.43**
-- **Current Account Balance**: **USD $18,409.43** (+84.09% Return)
+- **Current Account Balance**: **USD $28,409.43** (+42.05% Return)
 - **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)
 
 ---

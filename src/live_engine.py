@@ -66,9 +66,9 @@ def start_health_server(port: int = 8080):
 
 
 class LivePortfolioEngine:
-    def __init__(self, risk_per_trade_usd: float = 100.0):
+    def __init__(self, risk_per_trade_usd: Optional[float] = None):
         self.notifier = TelegramNotifier()
-        self.risk_per_trade_usd = risk_per_trade_usd
+        self.risk_per_trade_usd = risk_per_trade_usd if risk_per_trade_usd is not None else config.RISK_PER_TRADE_USD
         self.active_trades: Dict[str, Dict[str, Any]] = load_active_trades()
         self.last_bar_times: Dict[str, Any] = {}
         self._data_cache: Dict[str, pd.DataFrame] = {}
@@ -137,6 +137,144 @@ class LivePortfolioEngine:
             logger.error(f"Live data fetch error for {ticker}: {e}")
 
         return None
+
+    def get_quote_conversion_rate(self, quote_curr: str) -> float:
+        """
+        Returns the conversion rate from USD to quote currency:
+        - For USD quote (EURUSD, GBPUSD, AUDUSD): 1.0
+        - For JPY quote (EURJPY, GBPJPY, USDJPY): USDJPY exchange rate (~155.0)
+        - For CAD quote (USDCAD): USDCAD exchange rate (~1.38)
+        """
+        if quote_curr == "USD":
+            return 1.0
+        elif quote_curr == "JPY":
+            df = self.fetch_live_data("USDJPY=X", "5d", "15m")
+            if df is not None and not df.empty:
+                return float(df["Close"].iloc[-1])
+            return 155.0
+        elif quote_curr == "CAD":
+            df = self.fetch_live_data("USDCAD=X", "5d", "15m")
+            if df is not None and not df.empty:
+                return float(df["Close"].iloc[-1])
+            return 1.38
+        return 1.0
+
+    def check_prop_firm_safeguards(self) -> Tuple[bool, str, Dict[str, Any]]:
+        """
+        Monitors institutional prop-firm rules:
+        1. Daily loss <= MAX_DAILY_LOSS_PCT (Safety breaker halts before 5.0% prop limit)
+        2. Peak-to-trough trailing drawdown <= MAX_OVERALL_DD_PCT (Safety breaker halts before 10.0% limit)
+        3. Challenge Phase 1 Target Lock: +CHALLENGE_TARGET_PCT (Freezes entries to protect passed status)
+        """
+        metrics = {
+            "initial_capital": config.INITIAL_CAPITAL,
+            "current_equity": config.INITIAL_CAPITAL,
+            "peak_equity": config.INITIAL_CAPITAL,
+            "cumulative_net_pnl": 0.0,
+            "today_realized_pnl": 0.0,
+            "floating_unrealized_pnl": 0.0,
+            "today_total_pnl": 0.0,
+            "daily_loss_pct": 0.0,
+            "current_dd_pct": 0.0,
+            "account_profit_pct": 0.0,
+            "active_trade_count": len(self.active_trades)
+        }
+
+        today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        cum_pnl = 0.0
+        today_realized = 0.0
+        equity_curve = [config.INITIAL_CAPITAL]
+
+        if os.path.exists(config.JOURNAL_CSV_FILE):
+            try:
+                j_df = pd.read_csv(config.JOURNAL_CSV_FILE)
+                if not j_df.empty and "net_pnl" in j_df.columns:
+                    start_d = getattr(config, "PROP_FIRM_START_DATE", None)
+                    if start_d and "date" in j_df.columns:
+                        j_df = j_df[j_df["date"].astype(str) >= str(start_d)]
+                    cum_pnl = float(j_df["net_pnl"].sum())
+                    if "date" in j_df.columns:
+                        today_rows = j_df[j_df["date"].astype(str) == today_str]
+                        today_realized = float(today_rows["net_pnl"].sum())
+
+                    running = config.INITIAL_CAPITAL
+                    for p in j_df["net_pnl"]:
+                        running += float(p)
+                        equity_curve.append(running)
+            except Exception as e:
+                logger.warning(f"Failed to read trade journal for prop firm check: {e}")
+
+        # Compute floating unrealized PnL from active trades
+        floating_pnl = 0.0
+        for sid, tr in self.active_trades.items():
+            try:
+                pair = tr.get("pair", "")
+                side = int(tr.get("side", 1))
+                entry_p = float(tr.get("entry_price", 0.0))
+                units = float(tr.get("units", 0.0))
+                conv = float(tr.get("conv_rate", 1.0))
+                if conv <= 0:
+                    conv = 1.0
+
+                ticker_sym = pair + "=X" if not pair.endswith("=X") else pair
+                df_spot = self.fetch_live_data(ticker_sym, "1d", "15m")
+                cur_p = float(df_spot["Close"].iloc[-1]) if df_spot is not None and not df_spot.empty else entry_p
+
+                raw = (cur_p - entry_p) * units if side == 1 else (entry_p - cur_p) * units
+                floating_pnl += (raw / conv)
+            except Exception:
+                pass
+
+        today_total_pnl = today_realized + floating_pnl
+        current_equity = config.INITIAL_CAPITAL + cum_pnl + floating_pnl
+        peak_equity = max(max(equity_curve), current_equity)
+        current_dd_pct = ((peak_equity - current_equity) / peak_equity) * 100.0 if peak_equity > 0 else 0.0
+        daily_loss_pct = (today_total_pnl / config.INITIAL_CAPITAL) * 100.0
+        account_profit_pct = ((current_equity - config.INITIAL_CAPITAL) / config.INITIAL_CAPITAL) * 100.0
+
+        metrics.update({
+            "current_equity": current_equity,
+            "peak_equity": peak_equity,
+            "cumulative_net_pnl": cum_pnl,
+            "today_realized_pnl": today_realized,
+            "floating_unrealized_pnl": floating_pnl,
+            "today_total_pnl": today_total_pnl,
+            "daily_loss_pct": daily_loss_pct,
+            "current_dd_pct": current_dd_pct,
+            "account_profit_pct": account_profit_pct
+        })
+
+        if not getattr(config, "PROP_FIRM_MODE", False):
+            return True, "OK", metrics
+
+        # 1. Daily Loss Circuit Breaker
+        if daily_loss_pct <= -config.MAX_DAILY_LOSS_PCT:
+            msg = (
+                f"🛡️ Daily Loss Circuit Breaker: Today's loss is {daily_loss_pct:.2f}% "
+                f"(-${abs(today_total_pnl):,.2f}), exceeding the {config.MAX_DAILY_LOSS_PCT:.1f}% safety tripwire. "
+                f"New entries locked until 00:00 UTC to safeguard prop firm 5.0% limit."
+            )
+            return False, msg, metrics
+
+        # 2. Overall Drawdown Guard
+        if current_dd_pct >= config.MAX_OVERALL_DD_PCT:
+            msg = (
+                f"⚠️ Max Drawdown Safety Guard: Current drawdown is {current_dd_pct:.2f}%, "
+                f"exceeding the {config.MAX_OVERALL_DD_PCT:.1f}% safety limit. "
+                f"Trading locked to safeguard prop firm 10.0% max loss limit."
+            )
+            return False, msg, metrics
+
+        # 3. Phase Target Lock
+        if account_profit_pct >= config.CHALLENGE_TARGET_PCT:
+            msg = (
+                f"🎉 Challenge Phase 1 Target Reached! Total profit is +{account_profit_pct:.2f}% "
+                f"(+${cum_pnl + floating_pnl:,.2f}), meeting the {config.CHALLENGE_TARGET_PCT:.1f}% target. "
+                f"Trading automatically locked for verification to prevent give-back!"
+            )
+            return False, msg, metrics
+
+        return True, "OK", metrics
 
     def evaluate_strategy_signals(self, strat_cfg: Dict[str, Any], df: pd.DataFrame) -> pd.DataFrame:
         stype = strat_cfg["type"]
@@ -252,14 +390,19 @@ class LivePortfolioEngine:
             trade["bars_held"] = bars_held
 
             if exit_price is not None:
+                conv_rate = float(trade.get("conv_rate", 1.0))
+                if conv_rate <= 0:
+                    conv_rate = 1.0
+
                 if side == 1:
                     actual_exit = exit_price - (spread_val / 2.0)
-                    pnl = (actual_exit - entry_price) * units
-                    pnl_pct = ((actual_exit - entry_price) / entry_price) * 100
+                    raw_pnl = (actual_exit - entry_price) * units
                 else:
                     actual_exit = exit_price + (spread_val / 2.0)
-                    pnl = (entry_price - actual_exit) * units
-                    pnl_pct = ((entry_price - actual_exit) / entry_price) * 100
+                    raw_pnl = (entry_price - actual_exit) * units
+
+                pnl = raw_pnl / conv_rate
+                pnl_pct = (pnl / self.risk_per_trade_usd) * 1.0
 
                 trade.update({
                     "exit_price": actual_exit,
@@ -282,6 +425,24 @@ class LivePortfolioEngine:
                 return
             self.last_bar_times[sid] = last_closed_time
 
+            # Prop Guard 1: Limit Max Simultaneous Active Trades
+            if len(self.active_trades) >= config.MAX_ACTIVE_TRADES:
+                return
+
+            # Prop Guard 2: Prevent Multiple Concurrent Trades on the Same Currency Pair
+            open_pairs = [t.get("pair") for t in self.active_trades.values()]
+            if pair in open_pairs:
+                return
+
+            # Prop Guard 3: Automated Prop-Firm Circuit Breakers & Target Locks
+            can_enter, block_msg, _ = self.check_prop_firm_safeguards()
+            if not can_enter:
+                today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+                alert_key = f"SAFEGUARD:{today_str}:{block_msg[:25]}"
+                if hasattr(self.notifier, "alert_circuit_breaker"):
+                    self.notifier.alert_circuit_breaker(block_msg, alert_key)
+                return
+
             closed_df = df.iloc[:-1]
             sigs = self.evaluate_strategy_signals(strat_cfg, closed_df)
             if sigs.empty:
@@ -295,14 +456,21 @@ class LivePortfolioEngine:
                 tp = float(last_sig_row["tp_price"])
                 next_open = float(current_candle["Open"])
 
+                quote_curr = pair[-3:].upper()
+                conv_rate = self.get_quote_conversion_rate(quote_curr)
+                risk_in_quote = self.risk_per_trade_usd * conv_rate
+                friction_buffer = spread_val / 2.0
+
                 if sig == 1:
                     entry_price = next_open + (spread_val / 2.0)
                     sl_dist = entry_price - sl
-                    units = self.risk_per_trade_usd / sl_dist if sl_dist > 0 else 0
+                    effective_sl_dist = sl_dist + friction_buffer
+                    units = risk_in_quote / effective_sl_dist if effective_sl_dist > 0 else 0
                 else:
                     entry_price = next_open - (spread_val / 2.0)
                     sl_dist = sl - entry_price
-                    units = self.risk_per_trade_usd / sl_dist if sl_dist > 0 else 0
+                    effective_sl_dist = sl_dist + friction_buffer
+                    units = risk_in_quote / effective_sl_dist if effective_sl_dist > 0 else 0
 
                 if units > 0 and sl_dist > 0:
                     trade_record = {
@@ -316,6 +484,8 @@ class LivePortfolioEngine:
                         "tp": tp,
                         "units": units,
                         "risk_usd": self.risk_per_trade_usd,
+                        "conv_rate": conv_rate,
+                        "quote_curr": quote_curr,
                         "rr_ratio": strat_cfg["params"].get("rr_ratio", 2.0),
                         "max_bars": strat_cfg["params"].get("max_bars", 32),
                         "bars_held": 0,
@@ -422,9 +592,9 @@ if __name__ == "__main__":
 
     risk_env = os.getenv("RISK_PER_TRADE_USD", "").strip()
     try:
-        risk_val = float(risk_env) if risk_env and risk_env.lower() not in ("true", "false", "none", "null") else 100.0
+        risk_val = float(risk_env) if risk_env and risk_env.lower() not in ("true", "false", "none", "null") else config.RISK_PER_TRADE_USD
     except Exception:
-        risk_val = 100.0
+        risk_val = config.RISK_PER_TRADE_USD
     engine = LivePortfolioEngine(risk_per_trade_usd=risk_val)
 
     if args.once:

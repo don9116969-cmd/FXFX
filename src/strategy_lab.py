@@ -121,6 +121,8 @@ class StrategyLaboratory:
         rr_ratio = params.get("rr_ratio", 2.0)
         max_bars = params.get("max_bars", 32)
         sl_at_mid = params.get("sl_at_mid", True)
+        asia_min_pips = params.get("asia_min_range_pips", 8.0)
+        asia_max_pips = params.get("asia_max_range_pips", 65.0)
 
         buffer_val = buffer_pips * pip_size
 
@@ -131,58 +133,58 @@ class StrategyLaboratory:
         signals["max_bars"] = max_bars
 
         dates = df.index.date
-        unique_dates = np.unique(dates)
+        hours = df.index.hour
+        highs = df["High"].to_numpy()
+        lows = df["Low"].to_numpy()
+        closes = df["Close"].to_numpy()
+        n = len(df)
 
-        for d in unique_dates:
-            day_mask = (dates == d)
-            day_df = df[day_mask]
-            if len(day_df) < 10:
+        sig_arr = np.zeros(n, dtype=int)
+        sl_arr = np.full(n, np.nan)
+        tp_arr = np.full(n, np.nan)
+
+        day_diff = np.where(dates[1:] != dates[:-1])[0] + 1
+        day_starts = np.concatenate(([0], day_diff))
+        day_ends = np.concatenate((day_diff, [n]))
+
+        for s, e in zip(day_starts, day_ends):
+            if e - s < 10:
                 continue
-
-            asia_mask = (day_df.index.hour >= 0) & (day_df.index.hour < 7)
-            asia_bars = day_df[asia_mask]
-            if len(asia_bars) < 4:
+            h_slice = hours[s:e]
+            asia_idx = np.where((h_slice >= 0) & (h_slice < 7))[0]
+            if len(asia_idx) < 4:
                 continue
-
-            asia_h = asia_bars["High"].max()
-            asia_l = asia_bars["Low"].min()
-            asia_mid = (asia_h + asia_l) / 2.0
+            asia_h = np.max(highs[s + asia_idx])
+            asia_l = np.min(lows[s + asia_idx])
             asia_range = asia_h - asia_l
-
-            if asia_range < (8 * pip_size) or asia_range > (60 * pip_size):
+            if asia_range < (asia_min_pips * pip_size) or asia_range > (asia_max_pips * pip_size):
                 continue
+            asia_mid = (asia_h + asia_l) / 2.0
 
-            london_mask = (day_df.index.hour >= 7) & (day_df.index.hour < 11)
-            london_bars = day_df[london_mask]
-
-            traded_today = False
-
-            for idx, row in london_bars.iterrows():
-                if traded_today:
-                    break
-
-                c = row["Close"]
-
+            london_idx = np.where((h_slice >= 7) & (h_slice < 11))[0]
+            for li in london_idx:
+                idx = s + li
+                c = closes[idx]
                 if c >= (asia_h + buffer_val):
                     sl = asia_mid if sl_at_mid else (asia_h - (4.0 * pip_size))
                     risk = c - sl
                     if risk > (4.0 * pip_size):
-                        tp = c + (risk * rr_ratio)
-                        signals.loc[idx, "signal"] = 1
-                        signals.loc[idx, "sl_price"] = sl
-                        signals.loc[idx, "tp_price"] = tp
-                        traded_today = True
-
+                        sig_arr[idx] = 1
+                        sl_arr[idx] = sl
+                        tp_arr[idx] = c + (risk * rr_ratio)
+                        break
                 elif c <= (asia_l - buffer_val):
                     sl = asia_mid if sl_at_mid else (asia_l + (4.0 * pip_size))
                     risk = sl - c
                     if risk > (4.0 * pip_size):
-                        tp = c - (risk * rr_ratio)
-                        signals.loc[idx, "signal"] = -1
-                        signals.loc[idx, "sl_price"] = sl
-                        signals.loc[idx, "tp_price"] = tp
-                        traded_today = True
+                        sig_arr[idx] = -1
+                        sl_arr[idx] = sl
+                        tp_arr[idx] = c - (risk * rr_ratio)
+                        break
 
+        signals["signal"] = sig_arr
+        signals["sl_price"] = sl_arr
+        signals["tp_price"] = tp_arr
         return signals
 
     # =========================================================================
