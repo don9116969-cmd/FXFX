@@ -307,7 +307,7 @@ def format_live_status_card(engine=None) -> Tuple[str, Dict[str, Any]]:
             f"⏰ *Entry Time:* `{entry_t_str}` ({bars}/{max_bars} bars held)\n"
             f"📍 *Price:* Entry `{entry_p:.{dec}f}` → Live `{cur_spot:.{dec}f}` ({pips_diff:+.1f} pips)\n"
             f"🎯 *Take Profit:* `{tp_p:.{dec}f}` | 🛑 *Stop Loss:* `{sl_p:.{dec}f}`\n"
-            f"💰 *Position Size:* `{units:,.0f} units` (Max Risk: $100.00)\n"
+            f"💰 *Position Size:* `{units:,.0f} units` (Max Risk: ${float(pos.get('risk_usd', config.RISK_PER_TRADE_USD)):,.2f})\n"
             f"{p_emoji} *LIVE UNREALIZED PnL:* *{pnl_str}* ({pct_str})\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
         )
@@ -478,7 +478,7 @@ def format_prop_firm_card(engine=None) -> Tuple[str, Dict[str, Any]]:
         f"• *Automated Max Guard:* `-${max_dd_limit_usd:,.2f} ({max_dd_limit_pct:.1f}%)`\n"
         f"• *Peak Portfolio High:* `${peak_equity:,.2f}`\n"
         f"• *Drawdown Cushion Remaining:* `${max(0.0, max_dd_limit_usd - current_dd_usd):,.2f}`\n\n"
-        f"🎯 *3. PHASE 1 PROFIT TARGET MONITOR (+8.0%):*\n"
+        f"🎯 *3. PROFIT TARGET MONITOR (+{p1_target_pct:.1f}%):*\n"
         f"• *Target Profit:* `+${p1_target_usd:,.2f} (+{p1_target_pct:.1f}%)`\n"
         f"• *Current Profit:* `{('+' if account_profit_usd >= 0 else '')}${account_profit_usd:,.2f} ({account_profit_pct:+.2f}%)`\n"
         f"• *Challenge Completion:* `[{bar_str}] {p1_progress:.1f}%`\n"
@@ -526,7 +526,7 @@ def format_portfolio_summary_card() -> Tuple[str, Dict[str, Any]]:
         f"📊 *Historical Metrics:*\n"
         f"   • Total Trades Taken: {tot_trades}\n"
         f"   • Win Rate: *{wr:.1f}%* ({wins} Wins / {losses} Losses)\n"
-        f"   • Max Trade Risk: *$100.00 strictly enforced (1.0% cap)*\n"
+        f"   • Max Trade Risk: *${config.RISK_PER_TRADE_USD:,.2f} strictly enforced ({(config.RISK_PER_TRADE_USD / config.INITIAL_CAPITAL) * 100:.1f}% cap)*\n"
         f"   • Strategy Count: *8 Quantitative Models Active*\n"
         f"━━━━━━━━━━━━━━━━━━━━━━\n"
         f"🤖 *Live Bot Engine:* Active & Synchronized with GitHub Journal"
@@ -687,7 +687,7 @@ def format_earnings_calculator_card(capital: Optional[float] = None) -> Tuple[st
         f"📈 *Active Models:* 8 Champion Strategies (100% 15m)\n\n"
         "📊 *Empirical Quantitative Baseline:*\n"
         "• *Win Rate:* `51.7%` (166 Wins / 155 Losses)\n"
-        "• *Average Win / Loss:* `+$148.06 / -$102.39`\n"
+        f"• *Average Win / Loss:* `+${avg_win_r * risk_per_trade:,.2f} / -${avg_loss_r * risk_per_trade:,.2f}`\n"
         "• *Trade Frequency:* `~4.0 trades/day` (~122/mo)\n"
         f"• *Expected Edge/Trade:* `+${trade_expectancy_usd:,.2f}` (+0.27R net)\n"
         "━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -710,7 +710,7 @@ def format_earnings_calculator_card(capital: Optional[float] = None) -> Tuple[st
         "━━━━━━━━━━━━━━━━━━━━━━\n"
         "🛡️ *Risk Management Buffers:*\n"
         f"• Typical Max DD: *~4.5% to 6.5%* (Buffer: `-${max_dd_usd:,.2f}`)\n"
-        f"• Max Open Exposure: `${risk_per_trade * 4:,.2f}` (Max 4 concurrent)\n\n"
+        f"• Max Open Exposure: `${config.RISK_PER_TRADE_USD * config.MAX_ACTIVE_TRADES:,.2f}` (Max {config.MAX_ACTIVE_TRADES} concurrent)\n\n"
         "💡 *Custom Calculator Tip:*\n"
         "Type `/calculate <amount>` (e.g. `/calculate 5000` or `/calc 25000`) to project returns for any capital size!"
     )
@@ -1124,6 +1124,11 @@ class TelegramNotifier:
         rr = float(trade.get("rr_ratio", 2.0))
         dec = 2 if "JPY" in pair else 4
 
+        ticket = trade.get("mt5_ticket")
+        ticket_str = f"   • MT5 Ticket: `#{ticket}`\n" if ticket else ""
+        risk_u = float(trade.get("risk_usd", config.RISK_PER_TRADE_USD))
+        risk_p = (risk_u / max(1.0, config.INITIAL_CAPITAL)) * 100.0
+
         msg = (
             f"🚨 *TRADE ENTRY TRIGGERED*\n"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
@@ -1136,9 +1141,10 @@ class TelegramNotifier:
             f"   • Take Profit: *{tp_p:.{dec}f}*\n"
             f"   • Stop Loss: *{sl_p:.{dec}f}*\n"
             f"   • Risk:Reward: *1:{rr:.1f}*\n"
-            f"   • Position Risk: *$100.00 (1.0% cap)*\n"
+            f"   • Position Risk: *${risk_u:,.2f} ({risk_p:.2f}% cap)*\n"
+            f"{ticket_str}"
             f"━━━━━━━━━━━━━━━━━━━━━━\n"
-            f"🔒 *Zero-Indicator Microstructure Edge Active*"
+            f"🔒 *FundedNext MT5 Execution Active*"
         )
         return self.send_message(msg, alert_key=alert_key, force=force)
 

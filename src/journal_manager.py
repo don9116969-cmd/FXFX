@@ -177,7 +177,8 @@ def refresh_markdown_journal(active_trades: Optional[Dict[str, Any]] = None):
             f.write("\n")
         else:
             f.write("> ℹ️ **No active open positions currently in-flight.**  \n")
-            f.write("> *Risk deployed: $0.00 / $400.00 Max | Bot is actively scanning 15m market candles across all 8 quantitative models.*  \n\n")
+            max_dep = config.MAX_ACTIVE_TRADES * config.RISK_PER_TRADE_USD
+            f.write(f"> *Risk deployed: $0.00 / ${max_dep:,.2f} Max ({config.MAX_ACTIVE_TRADES} trades @ ${config.RISK_PER_TRADE_USD:,.2f}) | Bot is actively scanning 15m market candles across all 8 quantitative models.*  \n\n")
 
         f.write("---\n\n")
 
@@ -200,7 +201,8 @@ def refresh_markdown_journal(active_trades: Optional[Dict[str, Any]] = None):
         f.write(f"- **Win Rate**: **{wr:.1f}%** ({wins} Wins / {losses} Losses)\n")
         f.write(f"- **Net Realized PnL**: **{pnl_str}**\n")
         f.write(f"- **Current Account Balance**: **USD ${current_bal:,.2f}** ({ret_str} Return)\n")
-        f.write(f"- **Risk Control**: Strictly $100 per trade (1.0% portfolio risk cap)\n\n")
+        risk_p = (config.RISK_PER_TRADE_USD / config.INITIAL_CAPITAL) * 100.0
+        f.write(f"- **Risk Control**: Strictly ${config.RISK_PER_TRADE_USD:,.2f} per trade ({risk_p:.1f}% portfolio risk cap)\n\n")
 
         f.write("---\n\n")
 

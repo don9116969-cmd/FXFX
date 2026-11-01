@@ -16,20 +16,27 @@ class TradingConfig:
     BASE_DIR: str = BASE_DIR
     DATA_DIR: str = DATA_DIR
 
-    # Capital & Portfolio Risk Controls ($20,000 Prop-Firm Account Calibration)
-    INITIAL_CAPITAL: float = 20000.0   # Account starting balance in USD ($20,000 standard prop firm account)
-    RISK_PER_TRADE_USD: float = 60.0   # Max risk per trade ($60.00 = 0.30% of $20,000 for strict prop firm safety)
-    MAX_ACTIVE_TRADES: int = 2         # Maximum simultaneous open positions (keeps 3-yr peak DD strictly at 8.0%)
+    # Capital & Portfolio Risk Controls (FundedNext $25,000 Account Calibration)
+    INITIAL_CAPITAL: float = 25000.0   # Verified FundedNext competition balance
+    RISK_PER_TRADE_USD: float = 250.0  # Option A: 1.00% risk per trade ($250.00) for aggressive competition velocity
+    MAX_ACTIVE_TRADES: int = 3         # Up to 3 simultaneous positions (caps portfolio exposure at 3.0%)
     ACCOUNT_CURRENCY: str = "USD"
 
     # Prop-Firm Compliance Controls & Automated Circuit Breakers
     PROP_FIRM_MODE: bool = True
-    PROP_FIRM_PROGRAM: str = "The5ers High Stakes / Alpha Capital / FTMO"
-    MAX_DAILY_LOSS_PCT: float = 2.5    # Hard safety tripwire: Auto-halts entries if daily loss hits 2.5% (prop limit is 5.0%)
-    MAX_OVERALL_DD_PCT: float = 8.0    # Hard safety tripwire: Auto-halts entries if total DD hits 8.0% (prop limit is 10.0%)
-    CHALLENGE_TARGET_PCT: float = 8.0  # Phase 1 Target: 8.0% ($1,600 on $20k) - Auto-locks trading when reached!
-    CHALLENGE_PHASE_2_TARGET_PCT: float = 5.0 # Phase 2 Target: 5.0% ($1,000 on $20k)
-    PROP_FIRM_START_DATE: Optional[str] = "2026-11-01" # Tracks challenge metrics from this start date (None = all time)
+    PROP_FIRM_PROGRAM: str = "FundedNext $25,000 Competition"
+    MAX_DAILY_LOSS_PCT: float = 3.5    # Hard tripwire: Auto-halts if daily loss reaches 3.5% (safely below 5.0% limit)
+    MAX_OVERALL_DD_PCT: float = 8.0    # Hard tripwire: Auto-halts if total DD reaches 8.0% (safely below 10.0% limit)
+    CHALLENGE_TARGET_PCT: float = 50.0 # Competition target for top 100 ranking
+    CHALLENGE_PHASE_2_TARGET_PCT: float = 10.0
+    PROP_FIRM_START_DATE: Optional[str] = "2026-11-01" # Tracks competition metrics starting Nov 1
+
+    # MetaTrader 5 Live Execution Bridge
+    MT5_ENABLED: bool = True
+    MT5_LOGIN: int = 35323400
+    MT5_PASSWORD: str = "bghEJ25##"
+    MT5_SERVER: str = "FundedNext-Server 3"
+    MT5_PATH: str = "C:/Program Files/MetaTrader 5/terminal64.exe" 
 
     # Execution & Frictional Costs (Institutional ECN Spread + Slippage Modeling)
     SLIPPAGE_PIPS: float = 0.2         # 0.2 pips estimated execution slippage

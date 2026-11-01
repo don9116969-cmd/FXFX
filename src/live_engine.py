@@ -16,7 +16,7 @@ import argparse
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import threading
 from datetime import datetime, timezone
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 import pandas as pd
 import yfinance as yf
 
@@ -84,6 +84,23 @@ class LivePortfolioEngine:
 
         # Ensure trade journal markdown is synchronized on startup
         refresh_markdown_journal(self.active_trades)
+
+        # MT5 Live Execution Bridge
+        self.mt5_executor = None
+        if getattr(config, "MT5_ENABLED", False):
+            try:
+                from src.mt5_executor import MT5LiveExecutor
+                self.mt5_executor = MT5LiveExecutor(
+                    login=getattr(config, "MT5_LOGIN", None),
+                    password=getattr(config, "MT5_PASSWORD", None),
+                    server=getattr(config, "MT5_SERVER", "FundedNext-Server 3")
+                )
+                if self.mt5_executor.connect():
+                    logger.info("FundedNext MT5 Live Execution Bridge connected successfully!")
+                else:
+                    logger.warning("FundedNext MT5 Bridge failed to connect at startup.")
+            except Exception as e:
+                logger.error(f"Failed to initialize MT5 Executor: {e}")
 
     def _save_state(self):
         """Persists active positions to live_portfolio_state.json and refreshes trade_journal.md."""
@@ -227,6 +244,14 @@ class LivePortfolioEngine:
 
         today_total_pnl = today_realized + floating_pnl
         current_equity = config.INITIAL_CAPITAL + cum_pnl + floating_pnl
+
+        # If live MT5 connection is active, query broker directly for exact equity & floating PnL
+        if getattr(self, "mt5_executor", None) and self.mt5_executor.is_connected:
+            acc_info = self.mt5_executor.get_account_info()
+            if acc_info:
+                current_equity = acc_info["equity"]
+                floating_pnl = acc_info["profit"]
+                today_total_pnl = today_realized + floating_pnl
         peak_equity = max(max(equity_curve), current_equity)
         current_dd_pct = ((peak_equity - current_equity) / peak_equity) * 100.0 if peak_equity > 0 else 0.0
         daily_loss_pct = (today_total_pnl / config.INITIAL_CAPITAL) * 100.0
@@ -390,6 +415,13 @@ class LivePortfolioEngine:
             trade["bars_held"] = bars_held
 
             if exit_price is not None:
+                # Close MT5 position if active
+                if self.mt5_executor and trade.get("mt5_ticket"):
+                    try:
+                        self.mt5_executor.close_position_by_ticket(trade["mt5_ticket"])
+                    except Exception as e:
+                        logger.error(f"Failed to close MT5 position {trade.get('mt5_ticket')}: {e}")
+
                 conv_rate = float(trade.get("conv_rate", 1.0))
                 if conv_rate <= 0:
                     conv_rate = 1.0
@@ -473,6 +505,20 @@ class LivePortfolioEngine:
                     units = risk_in_quote / effective_sl_dist if effective_sl_dist > 0 else 0
 
                 if units > 0 and sl_dist > 0:
+                    mt5_ticket = None
+                    if self.mt5_executor and getattr(config, "MT5_ENABLED", False):
+                        try:
+                            mt5_ticket = self.mt5_executor.execute_market_order(
+                                pair=pair,
+                                side=sig,
+                                units=units,
+                                sl=sl,
+                                tp=tp,
+                                comment=f"FXFX {sid[:15]}"
+                            )
+                        except Exception as e:
+                            logger.error(f"MT5 order execution error for {pair}: {e}")
+
                     trade_record = {
                         "strategy_id": sid,
                         "strategy_name": strat_cfg["name"],
@@ -489,6 +535,7 @@ class LivePortfolioEngine:
                         "rr_ratio": strat_cfg["params"].get("rr_ratio", 2.0),
                         "max_bars": strat_cfg["params"].get("max_bars", 32),
                         "bars_held": 0,
+                        "mt5_ticket": mt5_ticket,
                         "entry_time_str": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
                     }
                     self.active_trades[sid] = trade_record
