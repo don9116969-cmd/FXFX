@@ -6,7 +6,7 @@ services:
     startCommand: python -u src/live_engine.py
     envVars:
       - key: TELEGRAM_BOT_TOKEN
-        value: 8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4
+        sync: false
       - key: TELEGRAM_CHAT_ID
         value: 1390044763
       - key: RISK_PER_TRADE_USD

@@ -39,14 +39,13 @@ SENT_ALERTS_FILE = config.SENT_ALERTS_FILE
 OFFSET_FILE = config.OFFSET_FILE
 
 
-DEFAULT_BOT_TOKEN = "8921977032:AAGtcA7uiuGNYAvWQYMtnjjj0wZL06ByWH4"
 DEFAULT_CHAT_ID = "1390044763"
 
 
 def get_telegram_token() -> str:
     token = os.getenv("TELEGRAM_BOT_TOKEN", "").strip()
     if not token or token.lower() in ("true", "false", "none", "null") or ":" not in token:
-        return DEFAULT_BOT_TOKEN
+        return ""
     return token
 
 
@@ -75,7 +74,7 @@ def get_or_detect_chat_id() -> str:
                         detected_id = str(msg["chat"]["id"])
                         return detected_id
     except Exception as e:
-        logger.warning(f"Failed to auto-detect Telegram Chat ID: {e}")
+        logger.warning(f"Failed to auto-detect Telegram Chat ID: {type(e).__name__}")
 
     return DEFAULT_CHAT_ID
 
@@ -767,6 +766,8 @@ class TelegramNotifier:
         self.last_update_id = self._load_offset()
 
     def _api_call(self, endpoint: str, payload: Optional[Dict[str, Any]] = None, params: Optional[Dict[str, Any]] = None, timeout: int = 12) -> Optional[Dict[str, Any]]:
+        if not self.token:
+            return None
         url = f"{self.base_url}/{endpoint}"
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
         for attempt in range(3):
@@ -780,12 +781,12 @@ class TelegramNotifier:
                     logger.warning(f"Telegram API {endpoint} non-OK response (HTTP {resp.status_code}): {data}")
                 return data
             except requests.exceptions.RequestException as e:
-                logger.warning(f"Telegram API {endpoint} connection error (attempt {attempt+1}/3): {e}")
+                logger.warning(f"Telegram API {endpoint} connection error (attempt {attempt+1}/3): {type(e).__name__}")
                 if attempt < 2:
                     time.sleep(0.5 * (attempt + 1))
                     continue
             except Exception as e:
-                logger.error(f"Telegram API {endpoint} parse error: {e}")
+                logger.error(f"Telegram API {endpoint} parse error: {type(e).__name__}")
                 break
         return None
 
