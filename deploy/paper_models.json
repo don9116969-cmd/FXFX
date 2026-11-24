@@ -1,0 +1,99 @@
+{
+  "starting_equity": 25000,
+  "risk_pct": 1,
+  "max_active": 2,
+  "portfolios": {
+    "Five-strategy growth": [
+      {
+        "pair": "USDJPY",
+        "family": "shock",
+        "params": {
+          "lookback": 12,
+          "trigger": 4.5,
+          "direction": 1,
+          "trend": 0
+        },
+        "stop_scale": 4.0,
+        "reward": null,
+        "hold": 32
+      },
+      {
+        "pair": "EURJPY",
+        "family": "shock",
+        "params": {
+          "lookback": 12,
+          "trigger": 6.0,
+          "direction": 1,
+          "trend": 480
+        },
+        "stop_scale": 2.0,
+        "reward": null,
+        "hold": 16
+      },
+      {
+        "pair": "XAUUSD",
+        "family": "session",
+        "params": {
+          "event": "New_York_open",
+          "lookback": 48,
+          "direction": 1,
+          "trigger": 1.5,
+          "trend": 0
+        },
+        "stop_scale": 4.0,
+        "reward": null,
+        "hold": 16
+      },
+      {
+        "pair": "GBPUSD",
+        "family": "breakout",
+        "params": {
+          "lookback": 192,
+          "direction": -1,
+          "trend": 480
+        },
+        "stop_scale": 6.0,
+        "reward": null,
+        "hold": 32
+      },
+      {
+        "pair": "AUDUSD",
+        "family": "fix",
+        "params": {
+          "event": "London",
+          "offset": -120,
+          "filter": "opposite_move"
+        },
+        "stop_scale": 6.0,
+        "reward": 1.2,
+        "hold": 32
+      }
+    ],
+    "AUDUSD + GBPUSD": [
+      {
+        "pair": "GBPUSD",
+        "family": "breakout",
+        "params": {
+          "lookback": 192,
+          "direction": -1,
+          "trend": 480
+        },
+        "stop_scale": 6.0,
+        "reward": null,
+        "hold": 32
+      },
+      {
+        "pair": "AUDUSD",
+        "family": "fix",
+        "params": {
+          "event": "London",
+          "offset": -120,
+          "filter": "opposite_move"
+        },
+        "stop_scale": 6.0,
+        "reward": 1.2,
+        "hold": 32
+      }
+    ]
+  }
+}

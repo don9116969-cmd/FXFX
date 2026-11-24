@@ -39,3 +39,7 @@ ENV/
 data/histdata_raw/
 *.zip
 *.tar.gz
+
+# Local paper trading environment and ledger
+.paper-state/
+.paper-venv/

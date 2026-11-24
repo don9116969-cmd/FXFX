@@ -32,10 +32,10 @@ class TradingConfig:
     PROP_FIRM_START_DATE: Optional[str] = "2026-11-01" # Tracks competition metrics starting Nov 1
 
     # MetaTrader 5 Live Execution Bridge
-    MT5_ENABLED: bool = True
-    MT5_LOGIN: int = 35323400
-    MT5_PASSWORD: str = "bghEJ25##"
-    MT5_SERVER: str = "FundedNext-Server 3"
+    MT5_ENABLED: bool = False
+    MT5_LOGIN: int = 0
+    MT5_PASSWORD: str = os.getenv("MT5_PASSWORD", "")
+    MT5_SERVER: str = os.getenv("MT5_SERVER", "")
     MT5_PATH: str = "C:/Program Files/MetaTrader 5/terminal64.exe" 
 
     # Execution & Frictional Costs (Institutional ECN Spread + Slippage Modeling)

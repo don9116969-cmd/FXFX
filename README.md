@@ -1,5 +1,10 @@
 # FXFX - Institutional Zero-Indicator Algorithmic Forex Trading
 
+## AWS paper trading and Telegram
+
+Follow the [VPS paper service guide](deploy/PAPER_VPS.md) for the five-strategy growth book and the AUDUSD + GBPUSD comparison book.
+
+
 Quantitative, zero-indicator multi-strategy portfolio engine engineered for 24/5 live execution and automated Telegram alerts.
 
 ---
